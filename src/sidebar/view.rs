@@ -104,6 +104,7 @@ fn row_line(model: &Model, messages: &Messages, row: &Row, width: usize) -> Line
         Row::Heading(name) => heading(name, messages),
         Row::Session(claude) => session::line(model, claude, width),
         Row::Detail(claude) => session::detail(model, claude, width),
+        Row::Window(pane) => session::window(model, pane, width),
     };
     if selected {
         highlight(line, width)

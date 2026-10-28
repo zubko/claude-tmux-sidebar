@@ -1,5 +1,5 @@
 //! One Claude session: status icon, window, and the tool and age on the right; below it the last
-//! prompt and context usage.
+//! prompt and context usage. Also a window without Claude.
 
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
@@ -69,6 +69,17 @@ pub fn detail(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
         Span::raw(" ".repeat(gap)),
         Span::styled(context, color),
         Span::raw(" "),
+    ])
+}
+
+/// `▌  3:docs                            `: a window without Claude, lined up with the names above.
+pub fn window(model: &Model, pane: &Pane, width: usize) -> Line<'static> {
+    let here = Some(pane.window_id) == model.snapshot.window;
+    let name = truncate(&label(pane), width.saturating_sub(4));
+    Line::from(vec![
+        marker(here),
+        Span::raw("  "),
+        Span::styled(name, Style::new().fg(MUTED).add_modifier(bold_if(here))),
     ])
 }
 

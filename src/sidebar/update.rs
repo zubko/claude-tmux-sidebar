@@ -1,5 +1,9 @@
 //! The sidebar as a pure state machine: `update(model, msg)` returns the next model and the effects to run.
 
+mod destination;
+
+use destination::destination;
+
 use super::rows::{self, Row, RowKey};
 use super::selection::{self, Selection};
 use super::snapshot::Snapshot;
@@ -175,22 +179,6 @@ fn activate(model: Model) -> (Model, Vec<Effect>) {
         })
         .collect();
     (model, effects)
-}
-
-fn destination(snapshot: &Snapshot, key: &RowKey) -> Option<(Target, Option<WindowId>)> {
-    match key {
-        RowKey::Session(name) => Some((
-            Target::Session(name.clone()),
-            snapshot.session_windows.get(name).copied(),
-        )),
-        RowKey::Claude(id) => snapshot.rows.iter().find_map(|r| match r {
-            Row::Session(c) if c.record.session_id == *id => c
-                .pane
-                .as_ref()
-                .map(|p| (Target::Pane(p.id), Some(p.window_id))),
-            _ => None,
-        }),
-    }
 }
 
 #[cfg(test)]

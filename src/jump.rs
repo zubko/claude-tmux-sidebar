@@ -57,7 +57,7 @@ pub fn target(direction: Direction, groups: &[Group], here: Option<&Pane>) -> Op
 pub fn run(ctx: &Context, direction: Direction, current: Option<PaneId>, client: Option<&str>) {
     let panes = tmux::panes();
     let claudes = live::load(&ctx.state_dir, &ctx.socket, &panes);
-    let groups = listing::groups(&tmux::sessions(), &claudes);
+    let groups = listing::groups(&tmux::sessions(), &claudes, &panes);
     let here = current
         .and_then(|id| panes.iter().find(|p| p.id == id))
         .and_then(|p| {
@@ -97,6 +97,7 @@ mod tests {
         vec![Group {
             name: GroupName::Session("s".to_owned()),
             claudes,
+            windows: vec![],
         }]
     }
 

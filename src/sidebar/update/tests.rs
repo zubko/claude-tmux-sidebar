@@ -27,6 +27,7 @@ fn snapshot(sidebar_active: bool) -> Snapshot {
     let groups = [Group {
         name: GroupName::Session("s".to_owned()),
         claudes,
+        windows: vec![],
     }];
     let sidebar = Pane {
         sidebar: true,
@@ -193,3 +194,5 @@ fn a_redundant_sidebar_removes_itself() {
         [Effect::KillSelf, Effect::Exit]
     );
 }
+
+mod windows;

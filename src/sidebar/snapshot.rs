@@ -51,7 +51,7 @@ pub fn load(
             ..c
         })
         .collect();
-    let groups = listing::groups(&tmux::sessions(), &claudes);
+    let groups = listing::groups(&tmux::sessions(), &claudes, &panes);
     (
         from_parts(rows::rows(&groups), &panes, me, popup),
         transcripts,
