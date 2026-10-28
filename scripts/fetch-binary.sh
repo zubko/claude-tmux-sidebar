@@ -8,7 +8,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly ROOT
-readonly REPO_URL="https://github.com/torikatsupg/claude-tmux-sidebar"
+readonly REPO_URL="https://github.com/zubko/claude-tmux-sidebar"
 readonly NAME="claude-tmux-sidebar"
 readonly BIN="$ROOT/bin/$NAME"
 readonly LOCK="$ROOT/bin/.fetch.lock"

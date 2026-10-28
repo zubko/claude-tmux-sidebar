@@ -1,7 +1,7 @@
 {
   "name": "tmux-sidebar",
   "description": "Reports Claude Code session status to the claude-tmux-sidebar tmux plugin.",
-  "version": "0.7.5",
+  "version": "0.7.5-zubko.1",
   "author": {
     "name": "torikatsupg"
   },

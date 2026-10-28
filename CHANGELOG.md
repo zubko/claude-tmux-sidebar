@@ -4,12 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.7.5-zubko.1] - 2026-10-28
+
+First release of the fork zubko/claude-tmux-sidebar, on top of 0.7.5.
+
 ### Changed
 
 - A row shows the tmux window name as the status line shows it, instead of the directory and git branch. Outside tmux it still shows the directory.
 - Every tmux window is listed. A window without Claude is a dim row you can select; Enter or a click goes to its pane. `n` / `p` still visit only Claude sessions.
 - Context window sizes come from the new `@cts_context_windows` option instead of a guess from the model name. A model that is not listed shows its token count.
 - The title and the current-window bar use Claude's coral instead of magenta.
+- Release binaries are downloaded from this fork. The release workflow signs them in a job that runs no build, and publishes without a saved write token.
 
 ## [0.7.5] - 2026-10-28
 
@@ -138,7 +143,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - `install.sh` for manual setups, with `--hooks-only` and `--uninstall`.
 - Options: `@cts_width`, `@cts_toggle_key` (several keys allowed), `@cts_popup_key`, `@cts_next_key`, `@cts_prev_key`, `@cts_default`, `@cts_lang` (`en` / `ja`), `@cts_hook_index`.
 
-[Unreleased]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.5...HEAD
+[Unreleased]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5-zubko.1...HEAD
+[0.7.5-zubko.1]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5...v0.7.5-zubko.1
 [0.7.5]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.2...v0.7.3
