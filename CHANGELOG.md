@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- A row shows the tmux window name as the status line shows it, instead of the directory and git branch. Outside tmux it still shows the directory.
+- Every tmux window is listed. A window without Claude is a dim row you can select; Enter or a click goes to its pane. `n` / `p` still visit only Claude sessions.
+- Context window sizes come from the new `@cts_context_windows` option instead of a guess from the model name. A model that is not listed shows its token count.
+- The title and the current-window bar use Claude's coral instead of magenta.
+
 ## [0.7.5] - 2026-10-28
 
 ### Fixed

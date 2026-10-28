@@ -37,7 +37,7 @@ Press `prefix + b` to open the sidebar. For other ways to install, see [Install]
 | ✓ (cyan) | done | The turn has ended and nothing is left running |
 | ○ (gray) | idle | Just started, or 60 s without input |
 
-Each session shows its directory and git branch, with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears only when the tmux session has more than one window. A magenta bar on the left edge marks the window you are in.
+Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. Windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in.
 
 ## Usage
 
@@ -70,6 +70,12 @@ set -g @cts_hook_index 77     # tmux hook array index (change only on conflicts)
 ```
 
 Avoid keys tmux already binds (e.g. `C-b` is `send-prefix`): the plugin's binding replaces them.
+
+The context usage on each row is a share of the model's context window. The window sizes come from `@cts_context_windows`, a list of `model=tokens` pairs with the model ids your transcripts use. A model that is not listed shows the token count (`61k`) instead. To find a size, run `claude -p --model <model> --output-format json "hi"`: the result's `modelUsage.<model id>.contextWindow` is the window your account gets.
+
+```tmux
+set -g @cts_context_windows 'claude-opus-5-5=1000000 claude-sonnet-4-6=200000'
+```
 
 ## Requirements
 
@@ -118,6 +124,7 @@ For debugging, start Claude with `CTS_DEBUG=1` to append raw hook payloads to `~
 
 - A turn interrupted with Esc, or by denying a prompt, stays "running" or "waiting" until it turns idle 60 seconds later.
 - The sidebar is not added to a zoomed window (it would unzoom it); it is added on the next visit.
+- Linked windows (one window in several tmux sessions, `link-window`) are not supported: such a window is listed under one session only.
 
 ## Contributing
 
