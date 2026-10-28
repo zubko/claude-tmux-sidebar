@@ -5,6 +5,7 @@ use std::path::Path;
 
 use itertools::Itertools;
 
+use super::context_window::Context;
 use super::transcript::Latest;
 use super::{Record, store};
 use crate::process;
@@ -20,11 +21,14 @@ pub struct Claude {
 }
 
 impl Claude {
-    /// How full the context window is, in percent.
-    pub fn context(&self) -> Option<u8> {
+    /// What the session knows about its context window.
+    pub fn context(&self) -> Option<Context<'_>> {
         match &self.latest {
-            Some(latest) => latest.context,
-            None if self.record.transcript.is_empty() => self.record.context,
+            Some(latest) => latest.context.as_ref().map(|usage| Context::Tokens {
+                tokens: usage.tokens,
+                model: &usage.model,
+            }),
+            None if self.record.transcript.is_empty() => self.record.context.map(Context::Percent),
             None => None,
         }
     }

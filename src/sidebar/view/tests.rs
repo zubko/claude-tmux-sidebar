@@ -2,6 +2,7 @@ use super::*;
 use crate::i18n::{EN, JA};
 use crate::listing::Group;
 use crate::session::Record;
+use crate::session::context_window::ContextWindows;
 use crate::session::live::Claude;
 use crate::sidebar::rows::RowKey;
 use crate::sidebar::selection::Selection;
@@ -43,6 +44,7 @@ fn model_of(claude: Claude, selected: bool) -> Model {
     }];
     let snapshot = Snapshot {
         rows: rows::rows(&groups),
+        context_windows: ContextWindows::parse("m=100"),
         ..Snapshot::default()
     };
     let selection = Selection {

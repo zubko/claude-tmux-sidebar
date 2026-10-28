@@ -1,7 +1,8 @@
 use super::*;
-use crate::session::transcript::Latest;
+use crate::session::transcript::{Latest, Usage};
 
-fn busy_claude(windows: u32, window_name: &str, context: Option<u8>) -> Claude {
+/// `context` is the percent of a 100-token window.
+fn busy_claude(windows: u32, window_name: &str, context: Option<u64>) -> Claude {
     Claude {
         record: Record {
             prompt: "fix the failing sidebar test please".to_owned(),
@@ -12,7 +13,12 @@ fn busy_claude(windows: u32, window_name: &str, context: Option<u8>) -> Claude {
             window_name: window_name.to_owned(),
             ..pane(1, 2)
         }),
-        latest: Some(Latest { context }),
+        latest: Some(Latest {
+            context: context.map(|tokens| Usage {
+                tokens,
+                model: "m".to_owned(),
+            }),
+        }),
     }
 }
 
@@ -63,4 +69,15 @@ fn a_narrow_row_cuts_the_window_name() {
     let detail = lines.get(4).cloned().unwrap_or_default();
     assert!(detail.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
     assert!(detail.spans.iter().any(|s| s.style.fg == Some(Color::Red)));
+}
+
+#[test]
+fn an_unlisted_model_shows_its_token_count() {
+    let mut model = model_of(busy_claude(1, "api", Some(61_800)), false);
+    model.snapshot.context_windows = ContextWindows::default();
+    let screen = screen(&model, &EN);
+    assert_eq!(
+        screen.get(4).map(String::as_str),
+        Some(" └ fix the failing sidebar t… 61k ")
+    );
 }

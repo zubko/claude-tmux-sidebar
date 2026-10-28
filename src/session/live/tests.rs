@@ -1,4 +1,5 @@
 use super::*;
+use crate::session::context_window::Context;
 use crate::tmux::pane::fixture::pane;
 
 fn record(id: &str, pane: &str, socket: &str, updated_at: u64) -> Record {
@@ -96,7 +97,7 @@ fn claude(record: Record, latest: Option<Latest>) -> Claude {
 fn shows_the_context_a_hook_before_0_7_4_wrote() {
     let record: Record = serde_json::from_str(r#"{"session_id":"a","branch":"main","context":64}"#)
         .unwrap_or_default();
-    assert_eq!(claude(record, None).context(), Some(64));
+    assert_eq!(claude(record, None).context(), Some(Context::Percent(64)));
 }
 
 #[test]

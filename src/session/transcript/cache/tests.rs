@@ -11,9 +11,12 @@ fn at(len: u64) -> Stamp {
     }
 }
 
-fn usage(context: u8) -> Latest {
+fn usage(tokens: u64) -> Latest {
     Latest {
-        context: Some(context),
+        context: Some(super::super::Usage {
+            tokens,
+            model: String::new(),
+        }),
     }
 }
 
@@ -22,7 +25,7 @@ fn reads_a_transcript_again_only_once_it_changed() {
     let reads = Cell::new(0_u8);
     let read = |_: &Path| {
         reads.set(reads.get() + 1);
-        Some(usage(reads.get()))
+        Some(usage(reads.get().into()))
     };
     let a = || PathBuf::from("a");
     let cache = Transcripts::default().renew([(a(), Some(at(1)))], read);
@@ -56,11 +59,12 @@ fn refresh_follows_the_file_on_disk() {
     let _ = fs::write(&path, format!("{entry}\n"));
     let key = path.to_string_lossy().into_owned();
     let cache = Transcripts::default().refresh([path.as_path()]);
-    assert_eq!(cache.latest(&key).map(|l| l.context), Some(Some(50)));
+    let tokens = |c: &Transcripts| c.latest(&key).map(|l| l.context.map(|u| u.tokens));
+    assert_eq!(tokens(&cache), Some(Some(100_000)));
     let compacted = r#"{"type":"system","subtype":"compact_boundary","gitBranch":"main"}"#;
     let _ = fs::write(&path, format!("{entry}\n{compacted}\n"));
     let after = cache.refresh([path.as_path()]);
     let _ = fs::remove_file(&path);
-    assert_eq!(after.latest(&key).map(|l| l.context), Some(None));
+    assert_eq!(tokens(&after), Some(None));
     assert_eq!(after.refresh([path.as_path()]).latest(&key), None);
 }

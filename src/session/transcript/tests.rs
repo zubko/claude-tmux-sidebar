@@ -16,7 +16,15 @@ fn picks_the_last_main_thread_assistant_entry() {
         "partial line".to_owned(),
     ]
     .join("\n");
-    assert_eq!(latest(&text), Some(Latest { context: Some(50) }));
+    assert_eq!(
+        latest(&text),
+        Some(Latest {
+            context: Some(Usage {
+                tokens: 100_000,
+                model: "claude-opus-5-5".to_owned()
+            })
+        })
+    );
     assert_eq!(latest("nothing"), None);
 }
 
@@ -44,7 +52,15 @@ fn an_assistant_entry_after_a_compaction_wins() {
         assistant("claude-opus-5-5", "new", 20_000, false),
     ]
     .join("\n");
-    assert_eq!(latest(&text), Some(Latest { context: Some(10) }));
+    assert_eq!(
+        latest(&text),
+        Some(Latest {
+            context: Some(Usage {
+                tokens: 20_000,
+                model: "claude-opus-5-5".to_owned()
+            })
+        })
+    );
 }
 
 #[test]
@@ -55,14 +71,25 @@ fn only_a_main_thread_boundary_entry_counts_as_a_compaction() {
         r#"{"type":"user","message":{"content":"what is compact_boundary?"}}"#.to_owned(),
     ]
     .join("\n");
-    assert_eq!(latest(&text), Some(Latest { context: Some(50) }));
+    assert_eq!(
+        latest(&text),
+        Some(Latest {
+            context: Some(Usage {
+                tokens: 100_000,
+                model: "claude-opus-5-5".to_owned()
+            })
+        })
+    );
 }
 
 #[test]
-fn the_long_window_comes_from_the_suffix_the_family_or_the_size() {
-    assert_eq!(percent(100_000, "claude-opus-5-5"), 50);
-    assert_eq!(percent(100_000, "claude-opus-5-5[1m]"), 10);
-    assert_eq!(percent(100_000, "claude-fable-5-1"), 10);
-    assert_eq!(percent(300_000, "claude-opus-5-5"), 30);
-    assert_eq!(percent(5_000_000, "claude-opus-5-5[1m]"), 100);
+fn the_requested_model_wins_over_the_answering_one() {
+    let entry =
+        r#"{"type":"assistant","message":{"model":"claude-opus-5-5","usage":{"input_tokens":5}}}"#;
+    let model = |text: &str| latest(text).and_then(|l| l.context).map(|u| u.model);
+    assert_eq!(model(entry), Some("claude-opus-5-5".to_owned()));
+    assert_eq!(
+        model(&assistant("claude-opus-5-5[1m]", "main", 5, false)),
+        Some("claude-opus-5-5[1m]".to_owned())
+    );
 }

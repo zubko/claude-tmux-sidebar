@@ -6,12 +6,15 @@ use std::path::Path;
 use super::rows::{self, Row};
 use crate::context::Context;
 use crate::listing;
+use crate::session::context_window::ContextWindows;
 use crate::session::live::{self, Claude};
 use crate::session::transcript::cache::Transcripts;
 use crate::tmux::{
     self,
     pane::{self, Pane, PaneId, WindowId},
 };
+
+const CONTEXT_WINDOWS_OPTION: &str = "@cts_context_windows";
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Snapshot {
@@ -26,6 +29,8 @@ pub struct Snapshot {
     pub redundant: bool,
     /// Each tmux session's current window.
     pub session_windows: HashMap<String, WindowId>,
+    /// Context window sizes by model (`@cts_context_windows`).
+    pub context_windows: ContextWindows,
 }
 
 /// Reads tmux, the state files and the transcripts that changed since `transcripts`.
@@ -52,10 +57,14 @@ pub fn load(
         })
         .collect();
     let groups = listing::groups(&tmux::sessions(), &claudes, &panes);
-    (
-        from_parts(rows::rows(&groups), &panes, me, popup),
-        transcripts,
-    )
+    let context_windows = tmux::global_option(CONTEXT_WINDOWS_OPTION)
+        .map(|list| ContextWindows::parse(&list))
+        .unwrap_or_default();
+    let snapshot = Snapshot {
+        context_windows,
+        ..from_parts(rows::rows(&groups), &panes, me, popup)
+    };
+    (snapshot, transcripts)
 }
 
 /// The pure part of [`load`].
@@ -73,6 +82,7 @@ pub fn from_parts(rows: Vec<Row>, panes: &[Pane], me: Option<PaneId>, popup: boo
             .filter(|p| p.window_active)
             .map(|p| (p.session.clone(), p.window_id))
             .collect(),
+        context_windows: ContextWindows::default(),
     }
 }
 

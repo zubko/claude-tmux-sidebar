@@ -6,6 +6,7 @@ use ratatui::text::{Line, Span};
 
 use super::{ACCENT, DIM, MUTED};
 use crate::session::Status;
+use crate::session::context_window::ContextUse;
 use crate::session::live::Claude;
 use crate::sidebar::update::Model;
 use crate::text::{self, age, truncate};
@@ -52,9 +53,12 @@ pub fn line(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
 /// `▌└ fix the failing test…               42% `: the prompt lines up with the name above it.
 pub fn detail(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     let record = &claude.record;
-    let (context, color) = claude.context().map_or((String::new(), MUTED), |c| {
-        (format!("{c}%"), context_color(c))
-    });
+    let windows = &model.snapshot.context_windows;
+    let (context, color) = match claude.context().map(|c| windows.resolve(c)) {
+        Some(ContextUse::Percent(p)) => (format!("{p}%"), context_color(p)),
+        Some(ContextUse::Tokens(n)) => (text::tokens(n), MUTED),
+        None => (String::new(), MUTED),
+    };
     let reserved = if context.is_empty() {
         0
     } else {

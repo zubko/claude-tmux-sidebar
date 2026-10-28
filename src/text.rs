@@ -38,6 +38,15 @@ pub fn age(seconds: u64) -> String {
         )
 }
 
+/// Compact token count such as `950`, `62k` or `1.2M`.
+pub fn tokens(n: u64) -> String {
+    match n {
+        0..1_000 => n.to_string(),
+        1_000..1_000_000 => format!("{}k", n / 1_000),
+        _ => format!("{}.{}M", n / 1_000_000, n % 1_000_000 / 100_000),
+    }
+}
+
 /// Quotes `s` as a single shell word.
 pub fn shell_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', r"'\''"))
@@ -61,6 +70,13 @@ mod tests {
     #[test]
     fn truncate_counts_wide_characters_twice() {
         assert_eq!(truncate("承認待ち", 5), "承認…");
+    }
+
+    #[test]
+    fn tokens_are_compact() {
+        assert_eq!(tokens(950), "950");
+        assert_eq!(tokens(61_800), "61k");
+        assert_eq!(tokens(1_250_000), "1.2M");
     }
 
     #[test]
