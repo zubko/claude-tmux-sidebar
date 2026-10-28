@@ -16,7 +16,8 @@ mod session;
 const DIM: Color = Color::DarkGray;
 /// Readable but quieter than the default text (placeholders, help labels), on dark and light themes.
 const MUTED: Color = Color::Indexed(245);
-const ACCENT: Color = Color::Magenta;
+/// Claude's coral.
+const ACCENT: Color = Color::Rgb(0xD9, 0x77, 0x57);
 /// The cursor row's background; the row keeps its own colors on it.
 const CURSOR: Color = Color::Indexed(237);
 const TITLE: &str = "Claude";
