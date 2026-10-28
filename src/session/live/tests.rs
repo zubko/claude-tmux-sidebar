@@ -93,31 +93,20 @@ fn claude(record: Record, latest: Option<Latest>) -> Claude {
 }
 
 #[test]
-fn shows_the_branch_and_context_a_hook_before_0_7_4_wrote() {
+fn shows_the_context_a_hook_before_0_7_4_wrote() {
     let record: Record = serde_json::from_str(r#"{"session_id":"a","branch":"main","context":64}"#)
         .unwrap_or_default();
-    let claude = claude(record, None);
-    assert_eq!(claude.branch(), "main");
-    assert_eq!(claude.context(), Some(64));
+    assert_eq!(claude(record, None).context(), Some(64));
 }
 
 #[test]
-fn prefers_the_transcript_to_the_old_branch_and_context() {
+fn prefers_the_transcript_to_the_old_context() {
     let record = Record {
         transcript: "/t".to_owned(),
-        branch: "old".to_owned(),
         context: Some(64),
         ..Record::default()
     };
-    let latest = Latest {
-        branch: "new".to_owned(),
-        context: None,
-    };
-    let read = claude(record.clone(), Some(latest));
-    assert_eq!(read.branch(), "new");
+    let read = claude(record.clone(), Some(Latest { context: None }));
     assert_eq!(read.context(), None);
-
-    let unread = claude(record, None);
-    assert_eq!(unread.branch(), "");
-    assert_eq!(unread.context(), None);
+    assert_eq!(claude(record, None).context(), None);
 }

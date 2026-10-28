@@ -20,15 +20,6 @@ pub struct Claude {
 }
 
 impl Claude {
-    /// The git branch Claude last worked on; empty when unknown.
-    pub fn branch(&self) -> &str {
-        match &self.latest {
-            Some(latest) => &latest.branch,
-            None if self.record.transcript.is_empty() => &self.record.branch,
-            None => "",
-        }
-    }
-
     /// How full the context window is, in percent.
     pub fn context(&self) -> Option<u8> {
         match &self.latest {

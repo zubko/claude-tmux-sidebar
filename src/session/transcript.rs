@@ -1,5 +1,5 @@
-//! What a session's transcript tells about it: the git branch and how full the context window is
-//! (unknown right after a compaction).
+//! What a session's transcript tells about it: how full the context window is (unknown right after a
+//! compaction).
 
 pub mod cache;
 
@@ -21,7 +21,6 @@ const LONG_ONLY: [&str; 2] = ["fable", "mythos"];
 /// The latest state of a session, as of its last assistant entry or compaction.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Latest {
-    pub branch: String,
     /// Context usage in percent; `None` after a compaction until the next assistant entry.
     pub context: Option<u8>,
 }
@@ -34,8 +33,6 @@ struct Entry {
     subtype: String,
     #[serde(default, rename = "isSidechain")]
     sidechain: bool,
-    #[serde(default, rename = "gitBranch")]
-    branch: String,
     #[serde(default, rename = "requestedModel")]
     requested_model: String,
     message: Option<Message>,
@@ -85,10 +82,7 @@ pub fn latest(text: &str) -> Option<Latest> {
         .filter_map(|line| serde_json::from_str::<Entry>(line).ok())
         .filter(|e| !e.sidechain)
         .find_map(|entry| match entry.kind.as_str() {
-            "system" if entry.subtype == "compact_boundary" => Some(Latest {
-                branch: entry.branch,
-                context: None,
-            }),
+            "system" if entry.subtype == "compact_boundary" => Some(Latest { context: None }),
             "assistant" => {
                 let message = entry.message?;
                 let usage = message.usage?;
@@ -99,7 +93,6 @@ pub fn latest(text: &str) -> Option<Latest> {
                     + usage.cache_creation_input_tokens
                     + usage.cache_read_input_tokens;
                 Some(Latest {
-                    branch: entry.branch,
                     context: Some(percent(tokens, &model)),
                 })
             }

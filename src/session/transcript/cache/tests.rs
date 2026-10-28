@@ -13,7 +13,6 @@ fn at(len: u64) -> Stamp {
 
 fn usage(context: u8) -> Latest {
     Latest {
-        branch: "main".to_owned(),
         context: Some(context),
     }
 }

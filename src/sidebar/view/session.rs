@@ -1,5 +1,5 @@
-//! One Claude session: status icon, directory, branch, and the tool and age on the right; below it the
-//! last prompt and context usage.
+//! One Claude session: status icon, window, and the tool and age on the right; below it the last
+//! prompt and context usage.
 
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
@@ -9,12 +9,11 @@ use crate::session::Status;
 use crate::session::live::Claude;
 use crate::sidebar::update::Model;
 use crate::text::{self, age, truncate};
+use crate::tmux::pane::Pane;
 
 const SPINNER: [&str; 10] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 /// The name column keeps at least this many cells when the status text is long.
 const MIN_NAME_WIDTH: usize = 12;
-/// A branch squeezed below this many cells is dropped rather than cut to a stub.
-const MIN_BRANCH_WIDTH: usize = 4;
 /// Context usage from this percent on is a warning, and from the next one on an alarm.
 const CONTEXT_WARN: u8 = 50;
 const CONTEXT_ALARM: u8 = 80;
@@ -28,7 +27,7 @@ pub fn look(status: Status) -> (&'static str, Color) {
     }
 }
 
-/// `▌● 2:api main                        Bash 3s `; the bar marks the window you are in.
+/// `▌● 2:api                             Bash 3s `; the bar marks the window you are in.
 pub fn line(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     let (_, color) = look(claude.record.state);
     let right = truncate(
@@ -37,15 +36,13 @@ pub fn line(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     );
     let room = width.saturating_sub(5 + text::width(&right));
     let name = truncate(&name(claude), room);
-    let branch = branch(claude.branch(), room.saturating_sub(text::width(&name)));
     let here = here(model, claude);
-    let used = text::width(&name) + text::width(&branch) + text::width(&right);
+    let used = text::width(&name) + text::width(&right);
     Line::from(vec![
         marker(here),
         icon(model, claude.record.state),
         Span::raw(" "),
         Span::styled(name, bold_if(here)),
-        Span::styled(branch, MUTED),
         Span::raw(" ".repeat(width.saturating_sub(4 + used))),
         Span::styled(right, color),
         Span::raw(" "),
@@ -93,14 +90,6 @@ fn here(model: &Model, claude: &Claude) -> bool {
         .is_some_and(|p| Some(p.window_id) == model.snapshot.window)
 }
 
-/// ` main` after the name, cut to `room` cells; empty when there is no branch or no room for it.
-fn branch(branch: &str, room: usize) -> String {
-    if branch.is_empty() || room < MIN_BRANCH_WIDTH + 1 {
-        return String::new();
-    }
-    format!(" {}", truncate(branch, room - 1))
-}
-
 /// The bar on the left edge for the window you are in.
 fn marker(here: bool) -> Span<'static> {
     if here {
@@ -130,16 +119,26 @@ fn bold_if(on: bool) -> Modifier {
     }
 }
 
-/// `window:directory` when the tmux session has several windows, otherwise just the directory.
+/// The window as tmux names it, or the directory outside tmux.
 fn name(claude: &Claude) -> String {
-    let dir = std::path::Path::new(&claude.record.cwd)
-        .file_name()
-        .map_or_else(|| "?".to_owned(), |d| d.to_string_lossy().into_owned());
-    claude
-        .pane
-        .as_ref()
-        .filter(|p| p.session_windows > 1)
-        .map_or_else(|| dir.clone(), |p| format!("{}:{dir}", p.window_index))
+    claude.pane.as_ref().map_or_else(
+        || {
+            std::path::Path::new(&claude.record.cwd)
+                .file_name()
+                .map_or_else(|| "?".to_owned(), |d| d.to_string_lossy().into_owned())
+        },
+        label,
+    )
+}
+
+/// `index:name` like the tmux status line, or just the name when the session has one window and the
+/// name is not empty.
+fn label(pane: &Pane) -> String {
+    if pane.session_windows > 1 || pane.window_name.is_empty() {
+        format!("{}:{}", pane.window_index, pane.window_name)
+    } else {
+        pane.window_name.clone()
+    }
 }
 
 /// `[detail ]age`; the icon already shows the status, and the detail (tool name) is shown only while

@@ -49,7 +49,7 @@ pub struct Record {
     /// The head of the last prompt the user sent.
     #[serde(default)]
     pub prompt: String,
-    /// The session's transcript, where the sidebar reads the branch and context usage.
+    /// The session's transcript, where the sidebar reads the context usage.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub transcript: String,
     /// Whether background tasks were still running when the main thread last stopped.
@@ -61,9 +61,6 @@ pub struct Record {
     /// The last prompt was answered: a notification for it that arrives late is ignored.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub answered: bool,
-    /// The branch a hook before 0.7.4 wrote; used only while there is no `transcript`.
-    #[serde(default, skip_serializing)]
-    pub branch: String,
     /// The context usage a hook before 0.7.4 wrote; used only while there is no `transcript`.
     #[serde(default, skip_serializing)]
     pub context: Option<u8>,
@@ -96,19 +93,17 @@ mod tests {
         assert_eq!(record.state, Status::Waiting);
         assert_eq!(record.pane_id(), PaneId::parse("%3"));
         assert_eq!(record.pid, None);
-        assert_eq!(record.branch, "main");
         assert_eq!(record.context, Some(42));
     }
 
     #[test]
-    fn does_not_write_the_old_branch_and_context() {
+    fn does_not_write_the_old_context() {
         let record = Record {
-            branch: "main".to_owned(),
             context: Some(42),
             ..Record::default()
         };
         let json = serde_json::to_string(&record).unwrap_or_default();
-        assert!(!json.contains("branch") && !json.contains("context"));
+        assert!(!json.contains("context"));
     }
 
     #[test]

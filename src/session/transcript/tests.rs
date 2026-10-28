@@ -16,13 +16,7 @@ fn picks_the_last_main_thread_assistant_entry() {
         "partial line".to_owned(),
     ]
     .join("\n");
-    assert_eq!(
-        latest(&text),
-        Some(Latest {
-            branch: "main".to_owned(),
-            context: Some(50)
-        })
-    );
+    assert_eq!(latest(&text), Some(Latest { context: Some(50) }));
     assert_eq!(latest("nothing"), None);
 }
 
@@ -40,13 +34,7 @@ fn a_compaction_after_the_last_assistant_entry_leaves_the_context_unknown() {
         r#"{"type":"user","message":{"content":"summary"}}"#.to_owned(),
     ]
     .join("\n");
-    assert_eq!(
-        latest(&text),
-        Some(Latest {
-            branch: "after".to_owned(),
-            context: None
-        })
-    );
+    assert_eq!(latest(&text), Some(Latest { context: None }));
 }
 
 #[test]
@@ -56,13 +44,7 @@ fn an_assistant_entry_after_a_compaction_wins() {
         assistant("claude-opus-5-5", "new", 20_000, false),
     ]
     .join("\n");
-    assert_eq!(
-        latest(&text),
-        Some(Latest {
-            branch: "new".to_owned(),
-            context: Some(10)
-        })
-    );
+    assert_eq!(latest(&text), Some(Latest { context: Some(10) }));
 }
 
 #[test]
@@ -73,13 +55,7 @@ fn only_a_main_thread_boundary_entry_counts_as_a_compaction() {
         r#"{"type":"user","message":{"content":"what is compact_boundary?"}}"#.to_owned(),
     ]
     .join("\n");
-    assert_eq!(
-        latest(&text),
-        Some(Latest {
-            branch: "main".to_owned(),
-            context: Some(50)
-        })
-    );
+    assert_eq!(latest(&text), Some(Latest { context: Some(50) }));
 }
 
 #[test]

@@ -27,7 +27,10 @@ fn record(state: Status, detail: &str) -> Record {
 fn model(state: Status, detail: &str, selected: bool) -> Model {
     let claude = Claude {
         record: record(state, detail),
-        pane: Some(pane(1, 2)),
+        pane: Some(Pane {
+            window_name: "api".to_owned(),
+            ..pane(1, 2)
+        }),
         latest: None,
     };
     model_of(claude, selected)
@@ -128,7 +131,7 @@ fn the_cursor_is_a_background_that_keeps_the_row_colors() {
     assert!(line.spans.iter().any(|s| s.style.fg == Some(Color::Cyan)));
 }
 
-fn busy_claude(windows: u32, context: Option<u8>) -> Claude {
+fn busy_claude(windows: u32, window_name: &str, context: Option<u8>) -> Claude {
     Claude {
         record: Record {
             prompt: "fix the failing sidebar test please".to_owned(),
@@ -136,21 +139,22 @@ fn busy_claude(windows: u32, context: Option<u8>) -> Claude {
         },
         pane: Some(Pane {
             session_windows: windows,
+            window_name: window_name.to_owned(),
             ..pane(1, 2)
         }),
-        latest: Some(Latest {
-            branch: "feat/rows".to_owned(),
-            context,
-        }),
+        latest: Some(Latest { context }),
     }
 }
 
 #[test]
-fn a_session_shows_its_branch_then_its_prompt_and_context() {
-    let screen = screen(&model_of(busy_claude(1, Some(42)), false), &EN);
+fn a_session_shows_its_window_then_its_prompt_and_context() {
+    let screen = screen(
+        &model_of(busy_claude(1, "run the app", Some(42)), false),
+        &EN,
+    );
     assert_eq!(
         screen.get(3).map(String::as_str),
-        Some(" ✓ api feat/rows               2s ")
+        Some(" ✓ run the app                 2s ")
     );
     assert_eq!(
         screen.get(4).map(String::as_str),
@@ -160,10 +164,10 @@ fn a_session_shows_its_branch_then_its_prompt_and_context() {
 
 #[test]
 fn the_window_index_shows_only_with_several_windows() {
-    let screen = screen(&model_of(busy_claude(3, None), false), &EN);
+    let screen = screen(&model_of(busy_claude(3, "run the app", None), false), &EN);
     assert_eq!(
         screen.get(3).map(String::as_str),
-        Some(" ✓ 2:api feat/rows             2s ")
+        Some(" ✓ 2:run the app               2s ")
     );
     assert_eq!(
         screen.get(4).map(String::as_str),
@@ -172,11 +176,19 @@ fn the_window_index_shows_only_with_several_windows() {
 }
 
 #[test]
-fn a_narrow_row_cuts_the_branch_then_drops_it() {
-    let model = model_of(busy_claude(1, Some(90)), true);
+fn a_window_without_a_name_shows_its_index_like_tmux() {
+    let screen = screen(&model_of(busy_claude(1, "", None), false), &EN);
+    assert_eq!(
+        screen.get(3).map(String::as_str),
+        Some(" ✓ 2:                          2s ")
+    );
+}
+
+#[test]
+fn a_narrow_row_cuts_the_window_name() {
+    let model = model_of(busy_claude(1, "run the app", Some(90)), true);
     let row = |width| lines(&model, &EN, width, model.height).get(3).map(text);
-    assert_eq!(row(16).as_deref(), Some(" ✓ api feat… 2s "));
-    assert_eq!(row(14).as_deref(), Some(" ✓ api     2s "));
+    assert_eq!(row(16).as_deref(), Some(" ✓ run the … 2s "));
     let lines = lines(&model, &EN, 16, model.height);
     let detail = lines.get(4).cloned().unwrap_or_default();
     assert!(detail.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
