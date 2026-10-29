@@ -54,11 +54,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
-        with:
-          target: ${{ matrix.target }}
-          # Build the release from scratch: nothing restored from a cache another run could have written.
-          cache: false
+      # The runner's rustup installs the toolchain pinned in rust-toolchain.toml. No build cache: the
+      # release is built from scratch.
+      - name: Rust toolchain
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          rustup toolchain install
+          rustup target add "$TARGET"
       - name: musl tools
         if: runner.os == 'Linux'
         run: sudo apt-get install -y musl-tools

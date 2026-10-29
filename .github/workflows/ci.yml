@@ -15,8 +15,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # Installs the toolchain pinned in rust-toolchain.toml and caches the build.
-      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+      # The runner's rustup installs the toolchain pinned in rust-toolchain.toml.
+      - name: Rust toolchain
+        run: rustup toolchain install
       - name: shell tools
         run: sudo apt-get install -y shellcheck shfmt
       - name: cargo xtask ci
@@ -28,7 +29,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+      # The runner's rustup installs the toolchain pinned in rust-toolchain.toml.
+      - name: Rust toolchain
+        run: rustup toolchain install
       - run: cargo test --workspace --locked
 
   # Known vulnerabilities, licenses and dependency sources (see deny.toml).
@@ -38,7 +41,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+      # The runner's rustup installs the toolchain pinned in rust-toolchain.toml.
+      - name: Rust toolchain
+        run: rustup toolchain install
       - name: Install cargo-deny
         run: cargo install --locked cargo-deny@0.20.2
       - run: cargo deny --locked check
