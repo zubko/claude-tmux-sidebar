@@ -5,7 +5,7 @@
 One binary, `claude-tmux-sidebar`, does everything; `bin/cts` and `bin/cts-hook` are small shell entry points for it. `scripts/fetch-binary.sh` puts the binary in `bin/` on first run: it downloads it from the GitHub release matching the version (verifying its SHA-256), or builds it with `cargo` when no release binary fits. Claude Code skips the hook events that arrive before the binary is ready.
 
 - `claude-tmux-sidebar hook` runs on each Claude Code hook and writes the status, `$TMUX_PANE` and Claude's PID to `~/.cache/claude-tmux-sidebar/<session_id>.json`. `SessionEnd` removes the file.
-- `claude-tmux-sidebar toggle`, `ensure`, `fix-width`, … control tmux: tmux hooks such as `after-new-window` add a full-height pane on the left of each window and restore its width after layout changes. Closing the sidebar restores the window's layout from before it opened.
+- `claude-tmux-sidebar toggle`, `ensure`, `fix-width`, … control tmux: tmux hooks such as `after-new-window` add a full-height pane on the left of each window and restore its width after layout changes. Closing the sidebar restores the window's layout from before it opened, when the window still has the size that layout was saved at.
 - `claude-tmux-sidebar sidebar` draws the list and cleans up state files whose pane or process is gone. It closes itself in a window where only the sidebar is left.
 
 Statuses come from these Claude Code hooks:
@@ -39,11 +39,17 @@ Code layout (`src/`): pure modules turn values into values, and side effects sta
 | Module | Role |
 |---|---|
 | `cli`, `lib`, `main` | argument parsing and dispatch |
+| `context` | the process environment, read once at startup |
 | `tmux`, `session::store`, `process` | side effects: the tmux server, state files, other processes |
+| `tmux::pane` | `list-panes -F` output parsed into panes, and the pane / window ids |
+| `session`, `session::live` | the state file format, and which state files are live sessions of this tmux server |
+| `session::transcript` | the tokens and model of the last request, from the end of the transcript (`cache` re-reads only changed files) |
+| `session::context_window` | the `@cts_context_windows` sizes, and tokens as a share of the window |
 | `hook` | hook payload → status transition (`transition` is a pure state machine) |
 | `control` | opening / closing sidebars and restoring layouts |
-| `sidebar` | the list UI: `update` is a pure `(model, msg) → (model, effects)` function, `view` renders, `effect` runs effects |
-| `listing`, `jump` | grouping in tmux order, next / previous done or waiting session |
+| `sidebar` | the list UI: `update` is a pure `(model, msg) → (model, effects)` function (`destination` picks where a row goes), `view` renders, `effect` runs effects |
+| `listing`, `jump` | grouping in tmux order (windows without Claude with `@cts_show_windows on`), next / previous done or waiting session |
+| `text`, `i18n` | display width, truncation, ages and token counts; English and Japanese strings |
 
 Style rules, enforced by clippy (`Cargo.toml` `[workspace.lints]`, `clippy.toml`) and `cargo xtask ci`: no `unwrap` / `expect` / `panic` / indexing / `as` casts, functions of at most 30 lines, modules of at most 200 lines, and iterator adapters (`map`, `filter`, `fold`) over mutable loops.
 

@@ -5,7 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 description = "A tmux sidebar listing every Claude Code session with live status"
 license = "MIT"
-repository = "https://github.com/torikatsupg/claude-tmux-sidebar"
+repository = "https://github.com/zubko/claude-tmux-sidebar"
 publish = false
 
 [dependencies]

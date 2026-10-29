@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+> This is a fork of [torikatsupg/claude-tmux-sidebar](https://github.com/torikatsupg/claude-tmux-sidebar). It can list the windows without Claude too (`@cts_show_windows on`), labels rows with the window name, and reads context window sizes from an option. See [CHANGELOG.md](CHANGELOG.md) for the full list.
+
 Run several Claude Code sessions in parallel across tmux and you soon lose track of which one is waiting for your approval and which one has already finished. claude-tmux-sidebar keeps a sidebar on the left of every tmux window that lists all your tmux sessions and the [Claude Code](https://claude.com/claude-code) sessions running in them, with live status.
 
 ![Demo: one of several Claude Code sessions in the sidebar turns yellow (waiting for approval), and Enter in the sidebar jumps to it](docs/demo.gif)
@@ -15,13 +17,13 @@ Run several Claude Code sessions in parallel across tmux and you soon lose track
 1. With [TPM](https://github.com/tmux-plugins/tpm), add the plugin to `~/.tmux.conf` and press `prefix + I`:
 
    ```tmux
-   set -g @plugin 'torikatsupg/claude-tmux-sidebar#v0.7.5'
+   set -g @plugin 'zubko/claude-tmux-sidebar#v0.7.5-zubko.1'
    ```
 
 2. Inside Claude Code, install the hooks, then restart running Claude Code sessions:
 
    ```
-   /plugin install tmux-sidebar --marketplace torikatsupg/claude-tmux-sidebar
+   /plugin install tmux-sidebar --marketplace zubko/claude-tmux-sidebar
    ```
 
 Press `prefix + b` to open the sidebar. For other ways to install, see [Install](#install).
@@ -37,7 +39,7 @@ Press `prefix + b` to open the sidebar. For other ways to install, see [Install]
 | ✓ (cyan) | done | The turn has ended and nothing is left running |
 | ○ (gray) | idle | Just started, or 60 s without input |
 
-Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. Windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in.
+Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_show_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in.
 
 ## Usage
 
@@ -66,6 +68,7 @@ set -g @cts_prev_key C-p
 set -g @cts_default off       # open the sidebar when tmux starts
 set -g @cts_lang en           # en / ja
 set -g @cts_help on           # show the key help at the bottom
+set -g @cts_show_windows off  # also list the windows without Claude
 set -g @cts_hook_index 77     # tmux hook array index (change only on conflicts)
 ```
 
@@ -87,20 +90,20 @@ set -g @cts_context_windows 'claude-opus-5-5=1000000 claude-sonnet-4-6=200000'
 On first run, the plugin downloads the binary for your platform from the matching GitHub release and checks its SHA-256, or builds it with `cargo` when no release binary fits. Release binaries carry a [build provenance attestation](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations), which you can check with:
 
 ```sh
-gh attestation verify ~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sidebar --repo torikatsupg/claude-tmux-sidebar
+gh attestation verify ~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sidebar --repo zubko/claude-tmux-sidebar
 ```
 
 ## Install
 
 There are two parts: the **tmux plugin** draws the sidebar, and the **Claude Code hooks** report each session's status. The [Quick start](#quick-start) installs both; for other setups:
 
-- **Follow `main` instead of a release**: `set -g @plugin 'torikatsupg/claude-tmux-sidebar'`. Pinning a tag is recommended: nothing changes until you change the tag, and release tags cannot be moved or deleted.
-- **Pin the Claude Code plugin to a release**: `/plugin marketplace add torikatsupg/claude-tmux-sidebar#v0.7.5`, then `/plugin install tmux-sidebar@torikatsupg`. The same two commands without the tag also work on Claude Code versions without `--marketplace`.
+- **Follow `main` instead of a release**: `set -g @plugin 'zubko/claude-tmux-sidebar'`. Pinning a tag is recommended: nothing changes until you change the tag, and release tags cannot be moved or deleted.
+- **Pin the Claude Code plugin to a release**: `/plugin marketplace add zubko/claude-tmux-sidebar#v0.7.5-zubko.1`, then `/plugin install tmux-sidebar@zubko`. The same two commands without the tag also work on Claude Code versions without `--marketplace`.
 - **Hooks without the Claude Code plugin**: `~/.tmux/plugins/claude-tmux-sidebar/install.sh --hooks-only` registers them in `~/.claude/settings.json` (backed up first as `settings.json.bak.<timestamp>`). Use this or the plugin, not both, or every hook runs twice.
 - **Without TPM**:
 
   ```sh
-  git clone --branch v0.7.5 https://github.com/torikatsupg/claude-tmux-sidebar ~/.tmux/plugins/claude-tmux-sidebar
+  git clone --branch v0.7.5-zubko.1 https://github.com/zubko/claude-tmux-sidebar ~/.tmux/plugins/claude-tmux-sidebar
   ~/.tmux/plugins/claude-tmux-sidebar/install.sh
   ```
 
@@ -111,12 +114,12 @@ Restart running Claude Code sessions to pick up the hooks.
 ### Uninstall
 
 - TPM: remove the `@plugin` line and press `prefix + alt + u`.
-- Claude Code plugin: `/plugin uninstall tmux-sidebar@torikatsupg`.
+- Claude Code plugin: `/plugin uninstall tmux-sidebar@zubko`.
 - `install.sh`: run `./install.sh --uninstall`.
 
 ## Privacy
 
-Everything stays on your machine. Each Claude session's status is kept in `~/.cache/claude-tmux-sidebar/<session_id>.json`, readable only by you and removed when the session ends. It holds the session ID, working directory, tool name, tmux pane, Claude's process ID, the path of the session's transcript and the first 200 characters of your last prompt. The sidebar reads the git branch and context usage from the end of that transcript and does not store them.
+Everything stays on your machine. Each Claude session's status is kept in `~/.cache/claude-tmux-sidebar/<session_id>.json`, readable only by you and removed when the session ends. It holds the session ID, working directory, tool name, tmux pane, Claude's process ID, the path of the session's transcript and the first 200 characters of your last prompt. The sidebar reads the context usage from the end of that transcript and does not store it.
 
 For debugging, start Claude with `CTS_DEBUG=1` to append raw hook payloads to `~/.cache/claude-tmux-sidebar/debug.log`. **The log contains your prompts and tool inputs** — delete it when done and check it before sharing.
 

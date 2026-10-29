@@ -1,10 +1,10 @@
 {
-  "name": "torikatsupg",
+  "name": "zubko",
   "owner": {
-    "name": "torikatsupg"
+    "name": "zubko"
   },
   "metadata": {
-    "description": "Claude Code plugins by torikatsupg"
+    "description": "A fork of torikatsupg/claude-tmux-sidebar by zubko"
   },
   "plugins": [
     {

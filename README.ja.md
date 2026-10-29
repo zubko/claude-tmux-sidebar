@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+> これは [torikatsupg/claude-tmux-sidebar](https://github.com/torikatsupg/claude-tmux-sidebar) のフォークです。Claude のいないウィンドウも表示でき（`@cts_show_windows on`）、行にはウィンドウ名を出し、context window のサイズはオプションから読みます。変更の一覧は [CHANGELOG.md](CHANGELOG.md) にあります。
+
 tmux で Claude Code を何本も並行して動かしていると、どれが承認待ちで、どれがもう終わったのか、すぐに見失います。claude-tmux-sidebar は tmux の全ウィンドウの左側にサイドバーを出し、全 tmux セッションとその中で動いている [Claude Code](https://claude.com/claude-code) セッションを、状態つきでリアルタイムに一覧表示します。
 
 ![デモ: サイドバーに並ぶ Claude Code セッションの 1 つが黄色（承認待ち）に変わり、サイドバーで Enter を押してそこへ移動する様子](docs/demo.gif)
@@ -15,13 +17,13 @@ tmux で Claude Code を何本も並行して動かしていると、どれが�
 1. [TPM](https://github.com/tmux-plugins/tpm) を使う場合、`~/.tmux.conf` に次の行を追記して `prefix + I` を押します:
 
    ```tmux
-   set -g @plugin 'torikatsupg/claude-tmux-sidebar#v0.7.5'
+   set -g @plugin 'zubko/claude-tmux-sidebar#v0.7.5-zubko.1'
    ```
 
 2. Claude Code の中で hook を入れ、起動済みの Claude Code を再起動します:
 
    ```
-   /plugin install tmux-sidebar --marketplace torikatsupg/claude-tmux-sidebar
+   /plugin install tmux-sidebar --marketplace zubko/claude-tmux-sidebar
    ```
 
 `prefix + b` でサイドバーが開きます。ほかの入れ方は [インストール](#インストール) を参照してください。
@@ -37,7 +39,7 @@ tmux で Claude Code を何本も並行して動かしていると、どれが�
 | ✓ (水色) | 完了 | ターンが終わり、動いているものが残っていない |
 | ○ (灰) | 待機 | 起動直後、または 60 秒入力がない |
 
-各セッションには tmux のステータスラインと同じウィンドウ名（tmux の外ではディレクトリ）を表示し、右側に使用中のツールとその状態になってからの経過時間を表示します。下の行には最後に送ったプロンプトと context window の使用率を表示します（50% から黄色、80% から赤）。ウィンドウ番号（`1:api`）は、その tmux セッションにウィンドウが 2 つ以上あるとき、またはウィンドウ名が空のときに付きます。Claude のいないウィンドウも薄い色で表示します。左端のコーラル色のバーは、今いるウィンドウの印です。
+各セッションには tmux のステータスラインと同じウィンドウ名（tmux の外ではディレクトリ）を表示し、右側に使用中のツールとその状態になってからの経過時間を表示します。下の行には最後に送ったプロンプトと context window の使用率を表示します（50% から黄色、80% から赤）。ウィンドウ番号（`1:api`）は、その tmux セッションにウィンドウが 2 つ以上あるとき、またはウィンドウ名が空のときに付きます。`@cts_show_windows on` にすると、Claude のいないウィンドウも薄い色で表示します。左端のコーラル色のバーは、今いるウィンドウの印です。
 
 ## 操作
 
@@ -66,6 +68,7 @@ set -g @cts_prev_key C-p
 set -g @cts_default off       # tmux 起動時に開いておくか
 set -g @cts_lang ja           # en / ja
 set -g @cts_help on           # 下端のキー操作ヘルプを表示
+set -g @cts_show_windows off  # Claude のいないウィンドウも表示
 set -g @cts_hook_index 77     # tmux hook 配列のインデックス（衝突時のみ変更）
 ```
 
@@ -87,20 +90,20 @@ set -g @cts_context_windows 'claude-opus-5-5=1000000 claude-sonnet-4-6=200000'
 初回の起動時に、対応する GitHub Release から自分の環境向けのバイナリをダウンロードし、SHA-256 を検証します。合うバイナリが無ければ `cargo` でビルドします。リリースのバイナリには [build provenance attestation](https://docs.github.com/ja/actions/security-for-github-actions/using-artifact-attestations) が付いていて、次で確認できます:
 
 ```sh
-gh attestation verify ~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sidebar --repo torikatsupg/claude-tmux-sidebar
+gh attestation verify ~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sidebar --repo zubko/claude-tmux-sidebar
 ```
 
 ## インストール
 
 サイドバーを描く **tmux プラグイン** と、各セッションの状態を書き出す **Claude Code の hook** の 2 つを入れます。[クイックスタート](#クイックスタート) で両方入ります。それ以外の入れ方:
 
-- **リリースではなく `main` を追う**: `set -g @plugin 'torikatsupg/claude-tmux-sidebar'`。タグでの固定をおすすめします。タグを書き換えるまで何も変わらず、リリースのタグは移動も削除もできません。
-- **Claude Code プラグインをリリースに固定する**: `/plugin marketplace add torikatsupg/claude-tmux-sidebar#v0.7.5` のあと `/plugin install tmux-sidebar@torikatsupg`。タグを付けずに同じ 2 行を実行すれば、`--marketplace` の無い古い Claude Code でも入ります。
+- **リリースではなく `main` を追う**: `set -g @plugin 'zubko/claude-tmux-sidebar'`。タグでの固定をおすすめします。タグを書き換えるまで何も変わらず、リリースのタグは移動も削除もできません。
+- **Claude Code プラグインをリリースに固定する**: `/plugin marketplace add zubko/claude-tmux-sidebar#v0.7.5-zubko.1` のあと `/plugin install tmux-sidebar@zubko`。タグを付けずに同じ 2 行を実行すれば、`--marketplace` の無い古い Claude Code でも入ります。
 - **Claude Code プラグインを使わずに hook を入れる**: `~/.tmux/plugins/claude-tmux-sidebar/install.sh --hooks-only` で `~/.claude/settings.json` に登録します（実行前にバックアップ `settings.json.bak.<日時>` を作成）。プラグインと両方入れると hook が 2 回ずつ走るので、どちらか一方にしてください。
 - **TPM を使わない**:
 
   ```sh
-  git clone --branch v0.7.5 https://github.com/torikatsupg/claude-tmux-sidebar ~/.tmux/plugins/claude-tmux-sidebar
+  git clone --branch v0.7.5-zubko.1 https://github.com/zubko/claude-tmux-sidebar ~/.tmux/plugins/claude-tmux-sidebar
   ~/.tmux/plugins/claude-tmux-sidebar/install.sh
   ```
 
@@ -111,12 +114,12 @@ gh attestation verify ~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sideba
 ### アンインストール
 
 - TPM: `@plugin` 行を消して `prefix + alt + u`
-- Claude Code プラグイン: `/plugin uninstall tmux-sidebar@torikatsupg`
+- Claude Code プラグイン: `/plugin uninstall tmux-sidebar@zubko`
 - `install.sh`: `./install.sh --uninstall`
 
 ## プライバシー
 
-データは手元のマシンから出ません。各 Claude セッションの状態は `~/.cache/claude-tmux-sidebar/<session_id>.json` に本人だけが読める権限で保存され、セッションが終わると消えます。中身はセッション ID・作業ディレクトリ・ツール名・tmux ペイン・Claude のプロセス ID・セッションの transcript のパス・最後のプロンプトの先頭 200 文字です。git ブランチと context の使用率はサイドバーがその transcript の末尾から読み取り、保存はしません。
+データは手元のマシンから出ません。各 Claude セッションの状態は `~/.cache/claude-tmux-sidebar/<session_id>.json` に本人だけが読める権限で保存され、セッションが終わると消えます。中身はセッション ID・作業ディレクトリ・ツール名・tmux ペイン・Claude のプロセス ID・セッションの transcript のパス・最後のプロンプトの先頭 200 文字です。context の使用率はサイドバーがその transcript の末尾から読み取り、保存はしません。
 
 デバッグ用に `CTS_DEBUG=1` を付けて Claude を起動すると、hook の生 payload が `~/.cache/claude-tmux-sidebar/debug.log` に残ります。**このログにはプロンプトやツールの入力がそのまま入る**ので、使い終わったら消し、共有する前に中身を確認してください。
 

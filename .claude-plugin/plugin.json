@@ -5,8 +5,8 @@
   "author": {
     "name": "torikatsupg"
   },
-  "homepage": "https://github.com/torikatsupg/claude-tmux-sidebar",
-  "repository": "https://github.com/torikatsupg/claude-tmux-sidebar",
+  "homepage": "https://github.com/zubko/claude-tmux-sidebar",
+  "repository": "https://github.com/zubko/claude-tmux-sidebar",
   "license": "MIT",
   "keywords": ["tmux", "sidebar", "status"]
 }
