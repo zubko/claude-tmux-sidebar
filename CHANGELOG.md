@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- Closing the sidebar restores the saved layout only while the window still has the size it was saved at. A layout saved at another size made the panes larger than the window on tmux 3.7, so the bottom of a pane was off screen but still took input. This happened after a client with another screen size had resized the window.
 - Rows outside tmux keep their order. They sort by folder name, then by session id. Before, the order changed on every refresh.
 
 ## [0.7.5-zubko.1] - 2026-10-28

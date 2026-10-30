@@ -142,8 +142,9 @@ fn restore_layout(window: WindowId) {
         panes: layout::decode(&tmux::window_option(window, PANES_OPTION).unwrap_or_default()),
     });
     let target = window.to_string();
-    if let Some(layout) = layout::restorable(saved.as_ref(), &tmux::window_panes(window)) {
-        tmux::run(&["select-layout", "-t", &target, layout]);
+    if let Some((layout, size)) = layout::restorable(saved.as_ref(), &tmux::window_panes(window)) {
+        let (same_size, select) = layout::guarded_restore(&target, layout, &size);
+        tmux::run(&["if-shell", "-F", "-t", &target, &same_size, &select]);
     }
     for option in [LAYOUT_OPTION, PANES_OPTION] {
         tmux::run(&["set", "-wu", "-t", &target, option]);
