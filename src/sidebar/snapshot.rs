@@ -15,6 +15,7 @@ use crate::tmux::{
 };
 
 const CONTEXT_WINDOWS_OPTION: &str = "@cts_context_windows";
+const SHOW_WINDOWS_OPTION: &str = "@cts_show_windows";
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Snapshot {
@@ -56,7 +57,8 @@ pub fn load(
             ..c
         })
         .collect();
-    let groups = listing::groups(&tmux::sessions(), &claudes, &panes);
+    let shown = window_panes(&panes, tmux::global_option(SHOW_WINDOWS_OPTION).as_deref());
+    let groups = listing::groups(&tmux::sessions(), &claudes, shown);
     let context_windows = tmux::global_option(CONTEXT_WINDOWS_OPTION)
         .map(|list| ContextWindows::parse(&list))
         .unwrap_or_default();
@@ -65,6 +67,12 @@ pub fn load(
         ..from_parts(rows::rows(&groups), &panes, me, popup)
     };
     (snapshot, transcripts)
+}
+
+/// The panes whose windows are listed even without Claude: all of them with `@cts_show_windows on`,
+/// else none.
+fn window_panes<'a>(panes: &'a [Pane], option: Option<&str>) -> &'a [Pane] {
+    if option == Some("on") { panes } else { &[] }
 }
 
 /// The pure part of [`load`].
@@ -121,6 +129,14 @@ mod tests {
             .redundant
         );
         assert!(!from_parts(vec![], &[me.clone(), pane(1, 0)], Some(me.id), false).redundant);
+    }
+
+    #[test]
+    fn lists_windows_without_claude_only_when_the_option_is_on() {
+        let panes = [pane(1, 0)];
+        assert_eq!(window_panes(&panes, Some("on")), &panes);
+        assert!(window_panes(&panes, Some("off")).is_empty());
+        assert!(window_panes(&panes, None).is_empty());
     }
 
     #[test]

@@ -55,8 +55,9 @@ status edge cases and the release steps. This file is the short guide for an age
 
 Statuses in short (the full table is in `CONTRIBUTING.md`): prompt and tool events mean running; `PermissionRequest`,
 `Elicitation`, `AskUserQuestion` and the matching notifications mean waiting; `Stop` with nothing left in the
-background means done; `SessionStart` and `idle_prompt` mean idle. Subagent events carry the parent's `session_id`;
-only the agent that raised a prompt ends the wait.
+background means done. A new session starts idle; `SessionStart` keeps the status the session already had.
+`idle_prompt` turns only a running or waiting session idle, and does nothing while background work runs. Subagent
+events carry the parent's `session_id`; only the agent that raised a prompt ends the wait.
 
 Environment: `TMUX_PANE` and `TMUX` (socket) say where the process runs; `CTS_STATE_DIR` overrides the state
 directory (tests use it); `CTS_DEBUG=1` appends raw hook payloads to `debug.log` in the state directory.
@@ -89,13 +90,14 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 
 ## How the list looks
 
-- One heading per tmux session, in tmux order. Under it, every window in window order. Sessions outside tmux come
-  last under one "(outside tmux)" heading. [fork] Rows outside tmux sort by their folder name, then session id.
+- One heading per tmux session, in tmux order. Under it, its windows with Claude in window order ([fork] every window
+  with `@cts_show_windows on`). Sessions outside tmux come last under one "(outside tmux)" heading. [fork] Rows
+  outside tmux sort by their folder name, then session id.
 - A window with Claude shows the Claude row(s): status icon, window label, tool and age, and a second line with the
   last prompt and the context usage.
-- [fork] With `@cts_show_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`). The cursor stops on it. `Enter` or a click
-  goes to the pane the user works in there (`tmux::pane::focused`), never to a sidebar pane. `n` / `p` and
-  `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.
+- [fork] With `@cts_show_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`).
+  The cursor stops on it. `Enter` or a click goes to the pane the user works in there (`tmux::pane::focused`), never
+  to a sidebar pane. `n` / `p` and `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.
 - [fork] The window label is what the tmux status line shows: `#I:#W`. The index is left out only when the session has
   one window and the name is not empty. The directory shows only outside tmux. No git branch.
 - [fork] Context usage is a share of the window size listed in the `@cts_context_windows` tmux option

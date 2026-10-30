@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- Windows without Claude are listed only with the new `@cts_show_windows on` option. It is off by default.
+
 ### Fixed
 
 - Rows outside tmux keep their order. They sort by folder name, then by session id. Before, the order changed on every refresh.
