@@ -136,14 +136,10 @@ fn bold_if(on: bool) -> Modifier {
 
 /// The window as tmux names it, or the directory outside tmux.
 fn name(claude: &Claude) -> String {
-    claude.pane.as_ref().map_or_else(
-        || {
-            std::path::Path::new(&claude.record.cwd)
-                .file_name()
-                .map_or_else(|| "?".to_owned(), |d| d.to_string_lossy().into_owned())
-        },
-        label,
-    )
+    claude
+        .pane
+        .as_ref()
+        .map_or_else(|| claude.folder().into_owned(), label)
 }
 
 /// `index:name` like the tmux status line, or just the name when the session has one window and the

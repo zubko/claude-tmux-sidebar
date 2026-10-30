@@ -1,6 +1,7 @@
 //! Claude sessions and the windows without Claude, grouped by tmux session, in tmux's own session /
 //! window / pane order.
 
+use std::borrow::Cow;
 use std::collections::HashSet;
 
 use itertools::Itertools;
@@ -29,11 +30,13 @@ fn group_name(claude: &Claude) -> GroupName {
     })
 }
 
-fn position(claude: &Claude) -> (u32, u32) {
-    claude
+/// tmux order; rows outside tmux have no pane, so they go by the folder they show.
+fn order(claude: &Claude) -> (u32, u32, Cow<'_, str>, &str) {
+    let (window, pane) = claude
         .pane
         .as_ref()
-        .map_or((0, 0), |p| (p.window_index, p.pane_index))
+        .map_or((0, 0), |p| (p.window_index, p.pane_index));
+    (window, pane, claude.folder(), &claude.record.session_id)
 }
 
 /// Every tmux session (with or without Claude) in tmux's order, then the sessions outside tmux.
@@ -52,7 +55,7 @@ pub fn groups(sessions: &[String], claudes: &[Claude], panes: &[Pane]) -> Vec<Gr
                 .iter()
                 .filter(|c| group_name(c) == name)
                 .cloned()
-                .sorted_by_key(position)
+                .sorted_by(|a, b| order(a).cmp(&order(b)))
                 .collect(),
             windows: windows
                 .iter()
@@ -81,83 +84,4 @@ fn plain_windows<'a>(claudes: &[Claude], panes: &'a [Pane]) -> Vec<&'a Pane> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::session::Record;
-    use crate::tmux::pane::{Pane, fixture::pane};
-
-    fn claude(id: &str, pane: Option<Pane>) -> Claude {
-        Claude {
-            record: Record {
-                session_id: id.to_owned(),
-                ..Record::default()
-            },
-            pane,
-            latest: None,
-        }
-    }
-
-    fn in_session(session: &str, window: u32) -> Pane {
-        Pane {
-            session: session.to_owned(),
-            ..pane(window, window)
-        }
-    }
-
-    #[test]
-    fn follows_tmux_order_and_puts_outside_last() {
-        let claudes = [
-            claude("out", None),
-            claude("b2", Some(in_session("b", 2))),
-            claude("b1", Some(in_session("b", 1))),
-        ];
-        let groups = groups(&["a".to_owned(), "b".to_owned()], &claudes, &[]);
-        let names: Vec<&GroupName> = groups.iter().map(|g| &g.name).collect();
-        assert_eq!(
-            names,
-            [
-                &GroupName::Session("a".into()),
-                &GroupName::Session("b".into()),
-                &GroupName::Outside
-            ]
-        );
-        let b: Vec<&str> = groups
-            .get(1)
-            .into_iter()
-            .flat_map(|g| &g.claudes)
-            .map(|c| c.record.session_id.as_str())
-            .collect();
-        assert_eq!(b, ["b1", "b2"]);
-    }
-
-    #[test]
-    fn lists_windows_without_claude_once_and_skips_sidebars() {
-        let claudes = [claude("b1", Some(in_session("b", 1)))];
-        let sidebar = Pane {
-            sidebar: true,
-            ..in_session("b", 2)
-        };
-        let second = Pane {
-            pane_index: 7,
-            ..in_session("b", 3)
-        };
-        let panes = [
-            in_session("b", 1),
-            sidebar,
-            in_session("b", 3),
-            second,
-            in_session("a", 2),
-        ];
-        let groups = groups(&["a".to_owned(), "b".to_owned()], &claudes, &panes);
-        let windows = |i: usize| -> Vec<u32> {
-            groups
-                .get(i)
-                .into_iter()
-                .flat_map(|g| &g.windows)
-                .map(|p| p.window_index)
-                .collect()
-        };
-        assert_eq!(windows(0), [2]);
-        assert_eq!(windows(1), [3]);
-    }
-}
+mod tests;

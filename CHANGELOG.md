@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+
+- Rows outside tmux keep their order. They sort by folder name, then by session id. Before, the order changed on every refresh.
+
 ## [0.7.5-zubko.1] - 2026-10-28
 
 First release of the fork zubko/claude-tmux-sidebar, on top of 0.7.5.

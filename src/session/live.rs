@@ -1,5 +1,6 @@
 //! Which state files describe live sessions of this tmux server.
 
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -31,6 +32,13 @@ impl Claude {
             None if self.record.transcript.is_empty() => self.record.context.map(Context::Percent),
             None => None,
         }
+    }
+
+    /// The last part of its directory, or `?` when the path has none.
+    pub fn folder(&self) -> Cow<'_, str> {
+        Path::new(&self.record.cwd)
+            .file_name()
+            .map_or(Cow::Borrowed("?"), |d| d.to_string_lossy())
     }
 }
 
