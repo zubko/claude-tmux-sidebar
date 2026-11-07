@@ -114,3 +114,19 @@ fn lists_windows_without_claude_once_and_skips_sidebars() {
     assert_eq!(windows(0), [2]);
     assert_eq!(windows(1), [3]);
 }
+
+#[test]
+fn a_linked_window_is_listed_once_under_its_last_session() {
+    let panes = [in_session("a", 1), in_session("a", 2), in_session("b", 2)];
+    let groups = groups(&["a".to_owned(), "b".to_owned()], &[], &panes);
+    let windows = |i: usize| -> Vec<(String, u32)> {
+        groups
+            .get(i)
+            .into_iter()
+            .flat_map(|g| &g.windows)
+            .map(|p| (p.session.clone(), p.window_index))
+            .collect()
+    };
+    assert_eq!(windows(0), [("a".to_owned(), 1)]);
+    assert_eq!(windows(1), [("b".to_owned(), 2)]);
+}

@@ -60,25 +60,30 @@ pub fn groups(sessions: &[String], claudes: &[Claude], panes: &[Pane]) -> Vec<Gr
             windows: windows
                 .iter()
                 .filter(|p| GroupName::Session(p.session.clone()) == name)
-                .map(|&p| p.clone())
+                .cloned()
                 .collect(),
             name,
         })
         .collect()
 }
 
-/// The pane the user works in, for each window without Claude, in window order.
-fn plain_windows<'a>(claudes: &[Claude], panes: &'a [Pane]) -> Vec<&'a Pane> {
+/// The pane the user works in, for each window without Claude, in window order. `list-panes -a` repeats
+/// a linked window under every session it is in; its last copy is kept, as `session::live` keeps the
+/// last pane per id for a Claude in such a window.
+fn plain_windows(claudes: &[Claude], panes: &[Pane]) -> Vec<Pane> {
     let busy: HashSet<_> = claudes
         .iter()
         .filter_map(|c| c.pane.as_ref())
         .map(|p| p.window_id)
         .collect();
+    let last_first: Vec<Pane> = panes.iter().rev().cloned().collect();
     panes
         .iter()
-        .filter(|p| !busy.contains(&p.window_id))
-        .unique_by(|p| p.window_id)
-        .filter_map(|p| pane::focused(panes, p.window_id))
+        .map(|p| p.window_id)
+        .unique()
+        .filter(|w| !busy.contains(w))
+        .filter_map(|w| pane::focused(&last_first, w))
+        .cloned()
         .sorted_by_key(|p| p.window_index)
         .collect()
 }

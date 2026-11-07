@@ -197,9 +197,10 @@ every sidebar. Ask the user first: this changes their running tmux.
 
 ## Known gaps
 
-- Linked windows (`link-window`) are not supported. `list-panes -a` lists each pane under one session only, so a
-  linked window gets a row under one session, and going to it lets tmux pick the session. Don't add code that relies
-  on a window id belonging to one session without handling this first.
+- Linked windows (`link-window`) get one row. `list-panes -a` repeats the window under every session it is in; the
+  last copy wins both for a Claude row (`session::live`, one pane per id) and for a window row
+  (`listing::plain_windows`), so the window sits under the last of its sessions, and going to it lets tmux pick the
+  session. Don't add code that relies on a window id belonging to one session without handling this first.
 - A turn interrupted with Esc, or by denying a prompt, stays "running" or "waiting" until `idle_prompt` turns it
   idle about 60 seconds later.
 - The sidebar is not added to a zoomed window; it is added on the next visit.

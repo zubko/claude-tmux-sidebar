@@ -18,6 +18,7 @@ Takes the colors, the status line command, the scrolling list and the active-win
 - The window you are in is marked by the `@cts_color_active` background (default `colour235`) on its rows, instead of the bar in the left column. Rows now start at the left edge, one column wider. When the cursor is on such a row, the background is the cursor's and the window index (`2:`) takes the accent color, so the two marks do not hide each other.
 - A Claude row in a window that tmux named itself shows the session's directory instead of the window name: tmux names a window after the command it runs, so such a name says nothing. A window named by hand (`rename-window`, `new-window -n`) shows its name as before, and a window without Claude always shows `#I:#W`.
 - Every Claude session takes two lines: the detail line shows even before the first prompt, and a session that has not replied yet shows `0%` context usage. Right after `/compact` the usage is still left blank until the next reply.
+- A window linked into several tmux sessions (`link-window`) is listed once, under the last of those sessions.
 
 ### Fixed
 

@@ -153,7 +153,7 @@ For debugging, start Claude with `CTS_DEBUG=1` to append raw hook payloads to `~
 
 - A turn interrupted with Esc, or by denying a prompt, stays "running" or "waiting" until it turns idle 60 seconds later.
 - The sidebar is not added to a zoomed window (it would unzoom it); it is added on the next visit.
-- Linked windows (one window in several tmux sessions, `link-window`) are not supported: such a window is listed under one session only.
+- Linked windows (one window in several tmux sessions, `link-window`) are listed once, under the last of those sessions.
 
 ## Contributing
 
