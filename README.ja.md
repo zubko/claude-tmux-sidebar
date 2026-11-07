@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-> これは [torikatsupg/claude-tmux-sidebar](https://github.com/torikatsupg/claude-tmux-sidebar) のフォークです。Claude のいないウィンドウも表示でき（`@cts_show_windows on`）、行にはウィンドウ名を出し、context window のサイズはオプションから読みます。変更の一覧は [CHANGELOG.md](CHANGELOG.md) にあります。
+> これは [torikatsupg/claude-tmux-sidebar](https://github.com/torikatsupg/claude-tmux-sidebar) のフォークです。Claude のいないウィンドウも表示でき（`@cts_all_windows on`）、行にはウィンドウ名を出し、context window のサイズはオプションから読みます。変更の一覧は [CHANGELOG.md](CHANGELOG.md) にあります。
 
 tmux で Claude Code を何本も並行して動かしていると、どれが承認待ちで、どれがもう終わったのか、すぐに見失います。claude-tmux-sidebar は tmux の全ウィンドウの左側にサイドバーを出し、全 tmux セッションとその中で動いている [Claude Code](https://claude.com/claude-code) セッションを、状態つきでリアルタイムに一覧表示します。
 
@@ -39,7 +39,7 @@ tmux で Claude Code を何本も並行して動かしていると、どれが�
 | ✓ (水色) | 完了 | ターンが終わり、動いているものが残っていない |
 | ○ (灰) | 待機 | 起動直後、または 60 秒入力がない |
 
-各セッションには tmux のステータスラインと同じウィンドウ名（tmux の外ではディレクトリ）を表示し、右側に使用中のツールとその状態になってからの経過時間を表示します。下の行には最後に送ったプロンプトと context window の使用率を表示します（50% から黄色、80% から赤）。ウィンドウ番号（`1:api`）は、その tmux セッションにウィンドウが 2 つ以上あるとき、またはウィンドウ名が空のときに付きます。`@cts_show_windows on` にすると、Claude のいないウィンドウも薄い色で表示します。左端のコーラル色のバーは、今いるウィンドウの印です。
+各セッションには tmux のステータスラインと同じウィンドウ名（tmux の外ではディレクトリ）を表示し、右側に使用中のツールとその状態になってからの経過時間を表示します。下の行には最後に送ったプロンプトと context window の使用率を表示します（50% から黄色、80% から赤）。ウィンドウ番号（`1:api`）は、その tmux セッションにウィンドウが 2 つ以上あるとき、またはウィンドウ名が空のときに付きます。`@cts_all_windows on` にすると、Claude のいないウィンドウも薄い色で表示します。左端のコーラル色のバーは、今いるウィンドウの印です。
 
 ## 操作
 
@@ -68,7 +68,7 @@ set -g @cts_prev_key C-p
 set -g @cts_default off       # tmux 起動時に開いておくか
 set -g @cts_lang ja           # en / ja
 set -g @cts_help on           # 下端のキー操作ヘルプを表示
-set -g @cts_show_windows off  # Claude のいないウィンドウも表示
+set -g @cts_all_windows off   # Claude のいないウィンドウも表示
 set -g @cts_hook_index 77     # tmux hook 配列のインデックス（衝突時のみ変更）
 ```
 

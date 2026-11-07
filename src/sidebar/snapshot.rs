@@ -16,7 +16,7 @@ use crate::tmux::{
 };
 
 const CONTEXT_WINDOWS_OPTION: &str = "@cts_context_windows";
-const SHOW_WINDOWS_OPTION: &str = "@cts_show_windows";
+const ALL_WINDOWS_OPTION: &str = "@cts_all_windows";
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Snapshot {
@@ -49,7 +49,7 @@ pub fn load(ctx: &Context, me: Option<PaneId>, popup: bool, caches: Caches) -> (
     let seeded = caches.seeded.seed(ctx, &panes);
     let claudes = live::load(&ctx.state_dir, &ctx.socket, &panes);
     let (claudes, transcripts) = with_transcripts(claudes, caches.transcripts);
-    let shown = window_panes(&panes, tmux::global_option(SHOW_WINDOWS_OPTION).as_deref());
+    let shown = window_panes(&panes, tmux::global_option(ALL_WINDOWS_OPTION).as_deref());
     let groups = listing::groups(&tmux::sessions(), &claudes, shown);
     let context_windows = tmux::global_option(CONTEXT_WINDOWS_OPTION)
         .map(|list| ContextWindows::parse(&list))
@@ -85,7 +85,7 @@ fn with_transcripts(claudes: Vec<Claude>, transcripts: Transcripts) -> (Vec<Clau
     (claudes, transcripts)
 }
 
-/// The panes whose windows are listed even without Claude: all of them with `@cts_show_windows on`,
+/// The panes whose windows are listed even without Claude: all of them with `@cts_all_windows on`,
 /// else none.
 fn window_panes<'a>(panes: &'a [Pane], option: Option<&str>) -> &'a [Pane] {
     if option == Some("on") { panes } else { &[] }

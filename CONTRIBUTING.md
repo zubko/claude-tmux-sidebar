@@ -50,7 +50,7 @@ Code layout (`src/`): pure modules turn values into values, and side effects sta
 | `hook` | hook payload → status transition (`transition` is a pure state machine) |
 | `control` | opening / closing sidebars and restoring layouts |
 | `sidebar` | the list UI: `update` is a pure `(model, msg) → (model, effects)` function (`destination` picks where a row goes), `view` renders, `effect` runs effects |
-| `listing`, `jump` | grouping in tmux order (windows without Claude with `@cts_show_windows on`), next / previous done or waiting session |
+| `listing`, `jump` | grouping in tmux order (windows without Claude with `@cts_all_windows on`), next / previous done or waiting session |
 | `text`, `i18n` | display width, truncation, ages and token counts; English and Japanese strings |
 
 Style rules, enforced by clippy (`Cargo.toml` `[workspace.lints]`, `clippy.toml`) and `cargo xtask ci`: no `unwrap` / `expect` / `panic` / indexing / `as` casts, functions of at most 30 lines, modules of at most 200 lines, and iterator adapters (`map`, `filter`, `fold`) over mutable loops.

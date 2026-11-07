@@ -98,14 +98,14 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 
 ## How the list looks
 
-- One heading per tmux session, in tmux order. Under it, its windows with Claude in window order ([fork] every window
-  with `@cts_show_windows on`). Sessions outside tmux come last under one "(outside tmux)" heading. [fork] Rows
-  outside tmux sort by their folder name, then session id.
+- One heading per tmux session, in tmux order. Under it, its windows with Claude in window order (every window with
+  `@cts_all_windows on`). Sessions outside tmux come last under one "(outside tmux)" heading. [fork] Rows outside
+  tmux sort by their folder name, then session id.
 - A window with Claude shows the Claude row(s): status icon, window label, tool and age, and a second line with the
   last prompt and the context usage.
-- [fork] With `@cts_show_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`).
-  The cursor stops on it. `Enter` or a click goes to the pane the user works in there (`tmux::pane::focused`), never
-  to a sidebar pane. `n` / `p` and `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.
+- With `@cts_all_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`). The
+  cursor stops on it. `Enter` or a click goes to the pane the user works in there (`tmux::pane::focused`), never to
+  a sidebar pane. `n` / `p` and `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.
 - [fork] A tmux session heading is a row too (`RowKey::Session`): the cursor stops on it, and `Enter` or a click
   switches to that session. The `none` placeholder under a session with nothing listed belongs to its heading.
   The row that stands for a pane (`rows::key_for_pane`) is its own Claude row, else a row of its window, else

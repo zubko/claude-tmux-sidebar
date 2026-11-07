@@ -2,7 +2,7 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-> This is a fork of [torikatsupg/claude-tmux-sidebar](https://github.com/torikatsupg/claude-tmux-sidebar). It can list the windows without Claude too (`@cts_show_windows on`), labels rows with the window name, and reads context window sizes from an option. See [CHANGELOG.md](CHANGELOG.md) for the full list.
+> This is a fork of [torikatsupg/claude-tmux-sidebar](https://github.com/torikatsupg/claude-tmux-sidebar). It can list the windows without Claude too (`@cts_all_windows on`), labels rows with the window name, and reads context window sizes from an option. See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 Run several Claude Code sessions in parallel across tmux and you soon lose track of which one is waiting for your approval and which one has already finished. claude-tmux-sidebar keeps a sidebar on the left of every tmux window that lists all your tmux sessions and the [Claude Code](https://claude.com/claude-code) sessions running in them, with live status.
 
@@ -39,7 +39,7 @@ Press `prefix + b` to open the sidebar. For other ways to install, see [Install]
 | ✓ (cyan) | done | The turn has ended. `Shell` on the right means a shell it started in the background still runs, such as a dev server |
 | ○ (gray) | idle | Just started, or 60 s without input |
 
-Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_show_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in. When that window has no row, the heading of its tmux session gets a white bar instead.
+Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_all_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in. When that window has no row, the heading of its tmux session gets a white bar instead.
 
 ## Usage
 
@@ -68,7 +68,7 @@ set -g @cts_prev_key C-p
 set -g @cts_default off       # open the sidebar when tmux starts
 set -g @cts_lang en           # en / ja
 set -g @cts_help on           # show the key help at the bottom
-set -g @cts_show_windows off  # also list the windows without Claude
+set -g @cts_all_windows off   # also list the windows without Claude
 set -g @cts_hook_index 77     # tmux hook array index (change only on conflicts)
 ```
 
