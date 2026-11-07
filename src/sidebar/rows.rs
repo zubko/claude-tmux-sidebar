@@ -19,12 +19,11 @@ pub enum Row {
     Detail(Claude),
     /// A window without Claude, by one of its panes.
     Window(Pane),
-    /// The placeholder under a tmux session without Claude; it stands for that session.
+    /// The placeholder under a tmux session with nothing listed; it belongs to the heading above it.
     Empty(String),
 }
 
-/// A selectable row: a tmux session without windows (its placeholder), a window without Claude, or a
-/// Claude session by id.
+/// A selectable row: a tmux session (its heading), a window without Claude, or a Claude session by id.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum RowKey {
     Session(String),
@@ -77,21 +76,23 @@ fn session_rows(claude: &Claude) -> Vec<Row> {
         .collect()
 }
 
-/// The key of a selectable row: the cursor stops on Claude sessions, windows without Claude, and the
-/// placeholder of a tmux session without windows, never on a heading.
+/// The key of a selectable row: the cursor stops on tmux session headings, Claude sessions and windows
+/// without Claude, never on the heading outside tmux.
 pub fn key(row: &Row) -> Option<RowKey> {
     match row {
-        Row::Empty(name) => Some(RowKey::Session(name.clone())),
+        Row::Heading(GroupName::Session(name)) => Some(RowKey::Session(name.clone())),
         Row::Window(pane) => Some(RowKey::Window(pane.window_id)),
         Row::Session(c) => Some(RowKey::Claude(c.record.session_id.clone())),
-        Row::Heading(_) | Row::Detail(_) | Row::Gap => None,
+        Row::Heading(GroupName::Outside) | Row::Detail(_) | Row::Empty(_) | Row::Gap => None,
     }
 }
 
-/// The selectable row a line belongs to: a detail line belongs to its session.
+/// The selectable row a line belongs to: a detail line belongs to its session, the placeholder to its
+/// heading.
 pub fn owner(row: &Row) -> Option<RowKey> {
     match row {
         Row::Detail(c) => Some(RowKey::Claude(c.record.session_id.clone())),
+        Row::Empty(name) => Some(RowKey::Session(name.clone())),
         _ => key(row),
     }
 }
@@ -101,16 +102,19 @@ pub fn keys(rows: &[Row]) -> Vec<RowKey> {
     rows.iter().filter_map(key).collect()
 }
 
-/// The row that stands for a pane: its Claude session, its window, or else its tmux session.
+/// The row that stands for a pane: its own Claude session, else a row of its window (a Claude session or
+/// the window itself), else its tmux session.
 pub fn key_for_pane(rows: &[Row], pane: &Pane) -> RowKey {
-    rows.iter()
-        .find_map(|r| match r {
-            Row::Session(c) if c.record.pane_id() == Some(pane.id) => {
-                Some(RowKey::Claude(c.record.session_id.clone()))
-            }
-            Row::Window(p) if p.window_id == pane.window_id => Some(RowKey::Window(p.window_id)),
-            _ => None,
-        })
+    let own = rows.iter().find_map(|r| match r {
+        Row::Session(c) if c.record.pane_id() == Some(pane.id) => key(r),
+        _ => None,
+    });
+    let in_window = rows.iter().find_map(|r| match r {
+        Row::Session(c) if c.pane.as_ref().map(|p| p.window_id) == Some(pane.window_id) => key(r),
+        Row::Window(p) if p.window_id == pane.window_id => key(r),
+        _ => None,
+    });
+    own.or(in_window)
         .unwrap_or_else(|| RowKey::Session(pane.session.clone()))
 }
 

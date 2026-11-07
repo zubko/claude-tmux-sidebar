@@ -5,7 +5,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
-use super::rows::{self, Row};
+use super::rows::{self, Row, RowKey};
 use super::update::Model;
 use crate::i18n::Messages;
 use crate::listing::GroupName;
@@ -102,7 +102,7 @@ fn row_line(model: &Model, messages: &Messages, row: &Row, width: usize) -> Line
             format!("   {}", messages.none),
             Style::new().fg(MUTED).add_modifier(Modifier::ITALIC),
         ),
-        Row::Heading(name) => heading(name, messages),
+        Row::Heading(name) => heading(model, name, messages),
         Row::Session(claude) => session::line(model, claude, width),
         Row::Detail(claude) => session::detail(model, claude, width),
         Row::Window(pane) => session::window(model, pane, width),
@@ -114,15 +114,24 @@ fn row_line(model: &Model, messages: &Messages, row: &Row, width: usize) -> Line
     }
 }
 
-fn heading(name: &GroupName, messages: &Messages) -> Line<'static> {
-    let text = match name {
-        GroupName::Session(s) => s.as_str(),
-        GroupName::Outside => messages.outside,
+/// `▌▾ work`: the bar, in the text color, marks the session of the window you are in while no row of
+/// the list stands for that window.
+fn heading(model: &Model, name: &GroupName, messages: &Messages) -> Line<'static> {
+    let (text, here) = match name {
+        GroupName::Session(s) => (s.as_str(), stands_for_focus(model, s)),
+        GroupName::Outside => (messages.outside, false),
     };
     Line::from(vec![
-        Span::raw(" "),
+        Span::raw(if here { "▌" } else { " " }),
         Span::styled(format!("▾ {text}"), Modifier::BOLD),
     ])
+}
+
+/// The focused pane has no Claude or window row, so the heading of its tmux session stands for it.
+fn stands_for_focus(model: &Model, session: &str) -> bool {
+    model.snapshot.focus.as_ref().is_some_and(|p| {
+        rows::key_for_pane(&model.snapshot.rows, p) == RowKey::Session(session.to_owned())
+    })
 }
 
 /// The cursor: a background across the full width, under the row's own colors.

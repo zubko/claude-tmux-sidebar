@@ -50,7 +50,7 @@ mod tests {
             },
             ..Model::default()
         };
-        let model = update(model, Msg::Action(Action::First)).0;
+        let model = update(model, Msg::Action(Action::Last)).0;
         assert_eq!(model.selection.selected, Some(RowKey::Window(window)));
         let (_, effects) = update(model, Msg::Action(Action::Activate));
         assert_eq!(

@@ -142,5 +142,24 @@ fn the_cursor_is_a_background_that_keeps_the_row_colors() {
     assert!(line.spans.iter().any(|s| s.style.fg == Some(Color::Cyan)));
 }
 
+#[test]
+fn the_heading_stands_for_this_window_when_it_has_no_row() {
+    let mut model = model(Status::Done, "", false);
+    let focus = Pane {
+        session: "work".to_owned(),
+        ..pane(5, 7)
+    };
+    model.snapshot.window = Some(focus.window_id);
+    model.snapshot.focus = Some(focus);
+    model.selection.selected = Some(RowKey::Session("work".to_owned()));
+    let line = lines(&model, &EN, WIDTH, model.height)
+        .get(2)
+        .cloned()
+        .unwrap_or_default();
+    assert!(text(&line).starts_with("▌▾ work"), "{}", text(&line));
+    assert_eq!(line.width(), usize::from(WIDTH));
+    assert!(line.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
+}
+
 mod session;
 mod windows;

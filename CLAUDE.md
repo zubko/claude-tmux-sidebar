@@ -106,6 +106,11 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 - [fork] With `@cts_show_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`).
   The cursor stops on it. `Enter` or a click goes to the pane the user works in there (`tmux::pane::focused`), never
   to a sidebar pane. `n` / `p` and `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.
+- [fork] A tmux session heading is a row too (`RowKey::Session`): the cursor stops on it, and `Enter` or a click
+  switches to that session. The `none` placeholder under a session with nothing listed belongs to its heading.
+  The row that stands for a pane (`rows::key_for_pane`) is its own Claude row, else a row of its window, else
+  its session heading. So when the window you are in has no row, its heading gets the cursor and a bar in the
+  text color (not coral).
 - [fork] The window label is what the tmux status line shows: `#I:#W`. The index is left out only when the session has
   one window and the name is not empty. The directory shows only outside tmux. No git branch.
 - [fork] Context usage is a share of the window size listed in the `@cts_context_windows` tmux option

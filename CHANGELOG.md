@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- A tmux session heading is a row: the cursor stops on it, and Enter or a click switches to that session. When the window you are in has no row (no Claude in it, and `@cts_show_windows` off), the heading of its session gets the cursor and a white bar. Before, the cursor stayed on an unrelated row.
+
 ## [0.7.5-zubko.2] - 2026-11-07
 
 First release of the fork zubko/claude-tmux-sidebar, on top of 0.7.5.
