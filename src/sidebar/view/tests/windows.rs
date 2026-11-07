@@ -8,19 +8,11 @@ fn window(index: u32, name: &str) -> Pane {
     }
 }
 
+/// Claude `a` in window 2; windows 1 and 3 run no Claude; the sidebar is in window 3.
 fn model_with_windows(selected: Option<RowKey>) -> Model {
-    let claude = Claude {
-        record: record(Status::Done, ""),
-        pane: Some(Pane {
-            window_name: "api".to_owned(),
-            session_windows: 3,
-            ..pane(1, 2)
-        }),
-        latest: None,
-    };
     let groups = [Group {
         name: GroupName::Session("work".to_owned()),
-        claudes: vec![claude],
+        claudes: vec![claude_in(3)],
         windows: vec![window(1, "talk to core"), window(3, "docs")],
     }];
     Model {
@@ -52,13 +44,21 @@ fn windows_without_claude_sit_between_sessions_in_window_order() {
     assert_eq!(
         list,
         [
-            " ▾ work",
-            "   1:talk to core",
-            " ✓ 2:api                       2s",
-            " └",
-            "▌  3:docs",
+            "▾ work",
+            "  1:talk to core",
+            "✓ 2:api                        2s",
+            "└",
+            "  3:docs",
         ]
     );
+}
+
+#[test]
+fn the_window_you_are_in_has_the_active_background() {
+    let model = model_with_windows(None);
+    let bgs = backgrounds(&model, 6);
+    assert!(!bgs.is_empty() && bgs.iter().all(|bg| *bg == Some(ACTIVE)));
+    assert!(backgrounds(&model, 3).iter().all(Option::is_none));
 }
 
 #[test]
@@ -74,16 +74,30 @@ fn a_selected_window_row_gets_the_cursor() {
 }
 
 #[test]
+fn the_cursor_on_the_window_you_are_in_shows_its_number_in_accent() {
+    let key = RowKey::Window(window(3, "").window_id);
+    let model = model_with_windows(Some(key));
+    let line = lines(&model, &EN, WIDTH, model.height)
+        .get(6)
+        .cloned()
+        .unwrap_or_default();
+    assert!(line.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
+    let accent: Vec<&str> = line
+        .spans
+        .iter()
+        .filter(|s| s.style.fg == Some(ACCENT))
+        .map(|s| s.content.as_ref())
+        .collect();
+    assert_eq!(accent, ["3:"]);
+}
+
+#[test]
 fn a_window_row_without_a_name_shows_its_index() {
     let model = model_with_windows(None);
     let pane = Pane {
         session_windows: 1,
         ..window(1, "")
     };
-    let line = text(&crate::sidebar::view::session::window(
-        &model,
-        &pane,
-        usize::from(WIDTH),
-    ));
-    assert_eq!(line, "   1:");
+    let line = text(&window::line(&model, &pane, usize::from(WIDTH), false));
+    assert_eq!(line, "  1:");
 }

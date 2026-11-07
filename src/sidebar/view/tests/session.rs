@@ -30,11 +30,11 @@ fn a_session_shows_its_window_then_its_prompt_and_context() {
     );
     assert_eq!(
         screen.get(3).map(String::as_str),
-        Some(" ✓ run the app                 2s ")
+        Some("✓ run the app                  2s ")
     );
     assert_eq!(
         screen.get(4).map(String::as_str),
-        Some(" └ fix the failing sidebar t… 42% ")
+        Some("└ fix the failing sidebar te… 42% ")
     );
 }
 
@@ -43,11 +43,11 @@ fn the_window_index_shows_only_with_several_windows() {
     let screen = screen(&model_of(busy_claude(3, "run the app", None), false), &EN);
     assert_eq!(
         screen.get(3).map(String::as_str),
-        Some(" ✓ 2:run the app               2s ")
+        Some("✓ 2:run the app                2s ")
     );
     assert_eq!(
         screen.get(4).map(String::as_str),
-        Some(" └ fix the failing sidebar test … ")
+        Some("└ fix the failing sidebar test p… ")
     );
 }
 
@@ -56,7 +56,7 @@ fn a_window_without_a_name_shows_its_index_like_tmux() {
     let screen = screen(&model_of(busy_claude(1, "", None), false), &EN);
     assert_eq!(
         screen.get(3).map(String::as_str),
-        Some(" ✓ 2:                          2s ")
+        Some("✓ 2:                           2s ")
     );
 }
 
@@ -64,7 +64,7 @@ fn a_window_without_a_name_shows_its_index_like_tmux() {
 fn a_narrow_row_cuts_the_window_name() {
     let model = model_of(busy_claude(1, "run the app", Some(90)), true);
     let row = |width| lines(&model, &EN, width, model.height).get(3).map(text);
-    assert_eq!(row(16).as_deref(), Some(" ✓ run the … 2s "));
+    assert_eq!(row(16).as_deref(), Some("✓ run the a… 2s "));
     let lines = lines(&model, &EN, 16, model.height);
     let detail = lines.get(4).cloned().unwrap_or_default();
     assert!(detail.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
@@ -78,7 +78,7 @@ fn an_unlisted_model_shows_its_token_count() {
     let screen = screen(&model, &EN);
     assert_eq!(
         screen.get(4).map(String::as_str),
-        Some(" └ fix the failing sidebar t… 61k ")
+        Some("└ fix the failing sidebar te… 61k ")
     );
 }
 
@@ -95,7 +95,7 @@ fn a_session_before_its_first_reply_shows_zero_percent() {
     let screen = screen(&model_of(claude, false), &EN);
     let detail = screen.get(4).cloned().unwrap_or_default();
     assert!(
-        detail.starts_with(" └ ") && detail.ends_with(" 0% "),
+        detail.starts_with("└ ") && detail.ends_with(" 0% "),
         "{detail}"
     );
 }

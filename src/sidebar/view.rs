@@ -13,6 +13,7 @@ use crate::listing::GroupName;
 use crate::session::Status;
 
 mod session;
+mod window;
 
 const TITLE: &str = "Claude";
 /// Statuses counted in the title bar, in order.
@@ -50,14 +51,14 @@ pub fn lines(model: &Model, messages: &Messages, width: u16, height: u16) -> Vec
         .collect()
 }
 
-/// ` ⏎ jump  j/k move  q close`: bold keys, muted labels.
+/// `⏎ jump  j/k move  q close`: bold keys, muted labels.
 fn help(messages: &Messages, theme: &Theme) -> Line<'static> {
     let spans = messages
         .help
         .iter()
         .enumerate()
         .flat_map(|(i, (key, label))| {
-            let gap = if i == 0 { " " } else { "  " };
+            let gap = if i == 0 { "" } else { "  " };
             [
                 Span::raw(gap),
                 Span::styled(*key, Modifier::BOLD),
@@ -90,7 +91,7 @@ fn title(model: &Model) -> Line<'static> {
             .add_modifier(Modifier::BOLD),
     );
     Line::from(
-        [Span::raw(" "), title, Span::raw(" ")]
+        [title, Span::raw(" ")]
             .into_iter()
             .chain(counts)
             .collect::<Vec<_>>(),
@@ -99,37 +100,33 @@ fn title(model: &Model) -> Line<'static> {
 
 fn row_line(model: &Model, messages: &Messages, row: &Row, width: usize) -> Line<'static> {
     let selected = rows::owner(row).is_some_and(|k| model.selection.selected.as_ref() == Some(&k));
+    let here = here(model, row);
     let line = match row {
         Row::Gap => Line::default(),
-        Row::Empty(_) => Line::styled(
-            format!("   {}", messages.none),
-            Style::new()
-                .fg(model.theme.muted)
-                .add_modifier(Modifier::ITALIC),
-        ),
-        Row::Heading(name) => heading(model, name, messages),
-        Row::Session(claude) => session::line(model, claude, width),
+        Row::Empty(_) => empty(model, messages),
+        Row::Heading(name) => heading(model, name, messages, here && selected),
+        Row::Session(claude) => session::line(model, claude, width, selected),
         Row::Detail(claude) => session::detail(model, claude, width),
-        Row::Window(pane) => session::window(model, pane, width),
+        Row::Window(pane) => window::line(model, pane, width, selected),
     };
-    if selected {
-        highlight(line, width, model.theme.cursor)
-    } else {
-        line
+    match background(&model.theme, here, selected) {
+        Some(color) => fill(line, width, color),
+        None => line,
     }
 }
 
-/// `▌▾ work`: the bar, in the text color, marks the session of the window you are in while no row of
-/// the list stands for that window.
-fn heading(model: &Model, name: &GroupName, messages: &Messages) -> Line<'static> {
-    let (text, here) = match name {
-        GroupName::Session(s) => (s.as_str(), stands_for_focus(model, s)),
-        GroupName::Outside => (messages.outside, false),
-    };
-    Line::from(vec![
-        Span::raw(if here { "▌" } else { " " }),
-        Span::styled(format!("▾ {text}"), Modifier::BOLD),
-    ])
+/// The row belongs to the window you are in: a Claude or window row of that window, or the heading and
+/// placeholder of its tmux session while no row of the list stands for that window.
+fn here(model: &Model, row: &Row) -> bool {
+    let window = model.snapshot.window;
+    match row {
+        Row::Session(c) | Row::Detail(c) => {
+            c.pane.as_ref().is_some_and(|p| Some(p.window_id) == window)
+        }
+        Row::Window(p) => Some(p.window_id) == window,
+        Row::Heading(GroupName::Session(s)) | Row::Empty(s) => stands_for_focus(model, s),
+        Row::Heading(GroupName::Outside) | Row::Gap => false,
+    }
 }
 
 /// The focused pane has no Claude or window row, so the heading of its tmux session stands for it.
@@ -139,8 +136,45 @@ fn stands_for_focus(model: &Model, session: &str) -> bool {
     })
 }
 
-/// The cursor: a background across the full width, under the row's own colors.
-fn highlight(line: Line<'static>, width: usize, color: Color) -> Line<'static> {
+/// The cursor's background, or else the one that marks the rows of the window you are in.
+fn background(theme: &Theme, here: bool, selected: bool) -> Option<Color> {
+    if selected {
+        Some(theme.cursor)
+    } else if here {
+        Some(theme.active)
+    } else {
+        None
+    }
+}
+
+/// `none` where a Claude row's name would start.
+fn empty(model: &Model, messages: &Messages) -> Line<'static> {
+    Line::styled(
+        format!("  {}", messages.none),
+        Style::new()
+            .fg(model.theme.muted)
+            .add_modifier(Modifier::ITALIC),
+    )
+}
+
+/// `▾ work`; in the accent color when the cursor sits on it while it stands for the window you are in,
+/// since the cursor's background hides the one that marks that window.
+fn heading(model: &Model, name: &GroupName, messages: &Messages, accented: bool) -> Line<'static> {
+    let text = match name {
+        GroupName::Session(s) => s.as_str(),
+        GroupName::Outside => messages.outside,
+    };
+    let style = Style::new().add_modifier(Modifier::BOLD);
+    let style = if accented {
+        style.fg(model.theme.accent)
+    } else {
+        style
+    };
+    Line::from(Span::styled(format!("▾ {text}"), style))
+}
+
+/// A background across the full width, under the row's own colors.
+fn fill(line: Line<'static>, width: usize, color: Color) -> Line<'static> {
     let pad = " ".repeat(width.saturating_sub(line.width()));
     let spans = line
         .spans

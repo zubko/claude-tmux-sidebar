@@ -110,8 +110,11 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 - [fork] A tmux session heading is a row too (`RowKey::Session`): the cursor stops on it, and `Enter` or a click
   switches to that session. The `none` placeholder under a session with nothing listed belongs to its heading.
   The row that stands for a pane (`rows::key_for_pane`) is its own Claude row, else a row of its window, else
-  its session heading. So when the window you are in has no row, its heading gets the cursor and a bar in the
-  text color (not coral).
+  its session heading. So when the window you are in has no row, its heading (and the placeholder) gets the
+  active background, and the cursor when the sidebar follows the focus.
+- The window you are in is marked by the `active` background on its rows (`view::here`). The cursor's background
+  wins; then the window index (`2:`) takes the accent color, or the whole label when it shows no index, or the whole
+  heading when the heading stands for the window (`view::window::number_first`). Rows start at the left edge.
 - [fork] The window label is what the tmux status line shows: `#I:#W`. The index is left out only when the session has
   one window and the name is not empty. The directory shows only outside tmux. No git branch.
 - [fork] Context usage is a share of the window size listed in the `@cts_context_windows` tmux option

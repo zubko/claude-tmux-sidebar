@@ -13,6 +13,8 @@ use crate::tmux::pane::fixture::pane;
 
 const WIDTH: u16 = 34;
 const CURSOR: Color = Theme::DEFAULT.cursor;
+const ACTIVE: Color = Theme::DEFAULT.active;
+const ACCENT: Color = Theme::DEFAULT.accent;
 
 fn record(state: Status, detail: &str) -> Record {
     Record {
@@ -25,14 +27,23 @@ fn record(state: Status, detail: &str) -> Record {
     }
 }
 
-fn model(state: Status, detail: &str, selected: bool) -> Model {
-    let claude = Claude {
-        record: record(state, detail),
+/// Claude `a` in window 2 of a session with `windows` windows; the window is named `api` by hand.
+fn claude_in(windows: u32) -> Claude {
+    Claude {
+        record: record(Status::Done, ""),
         pane: Some(Pane {
             window_name: "api".to_owned(),
+            session_windows: windows,
             ..pane(1, 2)
         }),
         latest: None,
+    }
+}
+
+fn model(state: Status, detail: &str, selected: bool) -> Model {
+    let claude = Claude {
+        record: record(state, detail),
+        ..claude_in(1)
     };
     model_of(claude, selected)
 }
@@ -73,19 +84,26 @@ fn screen(model: &Model, messages: &Messages) -> Vec<String> {
         .collect()
 }
 
+/// The background of every span on screen row `row`.
+fn backgrounds(model: &Model, row: usize) -> Vec<Option<Color>> {
+    let lines = lines(model, &EN, WIDTH, model.height);
+    let line = lines.get(row).cloned().unwrap_or_default();
+    line.spans.iter().map(|s| s.style.bg).collect()
+}
+
 #[test]
 fn draws_title_list_and_help() {
     let screen = screen(&model(Status::Waiting, "Edit", false), &EN);
     assert_eq!(screen.len(), 8);
-    assert_eq!(screen.first().map(String::as_str), Some(" Claude ◆1 "));
-    assert_eq!(screen.get(2).map(String::as_str), Some(" ▾ work"));
+    assert_eq!(screen.first().map(String::as_str), Some("Claude ◆1 "));
+    assert_eq!(screen.get(2).map(String::as_str), Some("▾ work"));
     assert_eq!(
         screen.get(3).map(String::as_str),
-        Some(" ◆ api                    Edit 2s ")
+        Some("◆ api                     Edit 2s ")
     );
     assert_eq!(
         screen.last().map(String::as_str),
-        Some(" ⏎ jump  j/k move  q close")
+        Some("⏎ jump  j/k move  q close")
     );
 }
 
@@ -102,19 +120,9 @@ fn hiding_the_help_gives_its_line_to_the_list() {
 }
 
 #[test]
-fn the_session_in_this_window_is_marked() {
-    let mut model = model(Status::Done, "", false);
-    model.snapshot.window = Some(pane(1, 2).window_id);
-    assert_eq!(
-        screen(&model, &EN).get(3).map(String::as_str),
-        Some("▌✓ api                         2s ")
-    );
-}
-
-#[test]
 fn every_session_has_a_detail_line() {
     let screen = screen(&model(Status::Idle, "", false), &EN);
-    assert_eq!(screen.get(4).map(|s| s.trim_end()), Some(" └"));
+    assert_eq!(screen.get(4).map(|s| s.trim_end()), Some("└"));
     assert_eq!(
         screen.get(4).map(|s| text::width(s)),
         Some(usize::from(WIDTH))
@@ -154,25 +162,6 @@ fn the_cursor_is_a_background_that_keeps_the_row_colors() {
 }
 
 #[test]
-fn the_heading_stands_for_this_window_when_it_has_no_row() {
-    let mut model = model(Status::Done, "", false);
-    let focus = Pane {
-        session: "work".to_owned(),
-        ..pane(5, 7)
-    };
-    model.snapshot.window = Some(focus.window_id);
-    model.snapshot.focus = Some(focus);
-    model.selection.selected = Some(RowKey::Session("work".to_owned()));
-    let line = lines(&model, &EN, WIDTH, model.height)
-        .get(2)
-        .cloned()
-        .unwrap_or_default();
-    assert!(text(&line).starts_with("▌▾ work"), "{}", text(&line));
-    assert_eq!(line.width(), usize::from(WIDTH));
-    assert!(line.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
-}
-
-#[test]
 fn the_title_and_status_use_the_configured_colors() {
     let theme = Theme {
         accent: Color::Magenta,
@@ -194,5 +183,6 @@ fn the_title_and_status_use_the_configured_colors() {
     assert!(colors(3).contains(&Some(theme.done)));
 }
 
+mod active;
 mod session;
 mod windows;

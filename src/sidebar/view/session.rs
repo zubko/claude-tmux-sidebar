@@ -1,16 +1,16 @@
-//! One Claude session: status icon, window, and the tool and age on the right; below it the last
-//! prompt and context usage. Also a window without Claude.
+//! One Claude session: status icon, window or directory, and the tool and age on the right; below it
+//! the last prompt and context usage.
 
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
+use super::window::{self, number_first};
 use crate::session::Status;
 use crate::session::context_window::ContextUse;
 use crate::session::live::Claude;
 use crate::sidebar::theme::Theme;
 use crate::sidebar::update::Model;
 use crate::text::{self, age, truncate};
-use crate::tmux::pane::Pane;
 
 const SPINNER: [&str; 10] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 /// The name column keeps at least this many cells when the status text is long.
@@ -28,29 +28,26 @@ pub fn look(theme: &Theme, status: Status) -> (&'static str, Color) {
     }
 }
 
-/// `▌● 2:api                             Bash 3s `; the bar marks the window you are in.
-pub fn line(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
+/// `● 2:api                             Bash 3s `.
+pub fn line(model: &Model, claude: &Claude, width: usize, selected: bool) -> Line<'static> {
     let (_, color) = look(&model.theme, claude.record.state);
     let right = truncate(
         &status_text(model, claude),
         width.saturating_sub(MIN_NAME_WIDTH),
     );
-    let room = width.saturating_sub(5 + text::width(&right));
+    let room = width.saturating_sub(4 + text::width(&right));
     let name = truncate(&name(claude), room);
-    let here = here(model, claude);
     let used = text::width(&name) + text::width(&right);
-    Line::from(vec![
-        marker(&model.theme, here),
-        icon(model, claude.record.state),
-        Span::raw(" "),
-        Span::styled(name, bold_if(here)),
-        Span::raw(" ".repeat(width.saturating_sub(4 + used))),
+    let start = vec![icon(model, claude.record.state), Span::raw(" ")];
+    let end = vec![
+        Span::raw(" ".repeat(width.saturating_sub(3 + used))),
         Span::styled(right, color),
         Span::raw(" "),
-    ])
+    ];
+    Line::from([start, name_spans(model, claude, &name, selected), end].concat())
 }
 
-/// `▌└ fix the failing test…               42% `: the prompt lines up with the name above it.
+/// `└ fix the failing test…                42% `: the prompt lines up with the name above it.
 pub fn detail(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     let record = &claude.record;
     let theme = &model.theme;
@@ -65,31 +62,14 @@ pub fn detail(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     } else {
         text::width(&context) + 1
     };
-    let prompt = truncate(&record.prompt, width.saturating_sub(4 + reserved));
-    let gap = width.saturating_sub(4 + text::width(&prompt) + text::width(&context));
+    let prompt = truncate(&record.prompt, width.saturating_sub(3 + reserved));
+    let gap = width.saturating_sub(3 + text::width(&prompt) + text::width(&context));
     Line::from(vec![
-        marker(theme, here(model, claude)),
         Span::styled("└ ", theme.dim),
         Span::styled(prompt, theme.muted),
         Span::raw(" ".repeat(gap)),
         Span::styled(context, color),
         Span::raw(" "),
-    ])
-}
-
-/// `▌  3:docs                            `: a window without Claude, lined up with the names above.
-pub fn window(model: &Model, pane: &Pane, width: usize) -> Line<'static> {
-    let here = Some(pane.window_id) == model.snapshot.window;
-    let name = truncate(&label(pane), width.saturating_sub(4));
-    Line::from(vec![
-        marker(&model.theme, here),
-        Span::raw("  "),
-        Span::styled(
-            name,
-            Style::new()
-                .fg(model.theme.muted)
-                .add_modifier(bold_if(here)),
-        ),
     ])
 }
 
@@ -103,21 +83,23 @@ fn context_color(theme: &Theme, percent: u8) -> Color {
     }
 }
 
+/// The name, bold in the window you are in. With the cursor there too, the background is the cursor's,
+/// so the window number (or the whole name when it shows none) takes the accent color instead.
+fn name_spans(model: &Model, claude: &Claude, name: &str, selected: bool) -> Vec<Span<'static>> {
+    let here = here(model, claude);
+    let style = Style::new().add_modifier(bold_if(here));
+    match claude.pane.as_ref().filter(|_| here && selected) {
+        Some(pane) => number_first(name, pane.window_index, style, model.theme.accent),
+        None => vec![Span::styled(name.to_owned(), style)],
+    }
+}
+
 /// The session runs in the window the sidebar belongs to.
 fn here(model: &Model, claude: &Claude) -> bool {
     claude
         .pane
         .as_ref()
         .is_some_and(|p| Some(p.window_id) == model.snapshot.window)
-}
-
-/// The bar on the left edge for the window you are in.
-fn marker(theme: &Theme, here: bool) -> Span<'static> {
-    if here {
-        Span::styled("▌", theme.accent)
-    } else {
-        Span::raw(" ")
-    }
 }
 
 /// The status icon; a running session spins.
@@ -132,7 +114,7 @@ fn icon(model: &Model, status: Status) -> Span<'static> {
     Span::styled(*spinner.unwrap_or(&icon), style)
 }
 
-fn bold_if(on: bool) -> Modifier {
+pub fn bold_if(on: bool) -> Modifier {
     if on {
         Modifier::BOLD
     } else {
@@ -142,20 +124,10 @@ fn bold_if(on: bool) -> Modifier {
 
 /// The window as tmux names it, or the directory outside tmux.
 fn name(claude: &Claude) -> String {
-    claude
-        .pane
-        .as_ref()
-        .map_or_else(|| claude.folder().into_owned(), label)
-}
-
-/// `index:name` like the tmux status line, or just the name when the session has one window and the
-/// name is not empty.
-fn label(pane: &Pane) -> String {
-    if pane.session_windows > 1 || pane.window_name.is_empty() {
-        format!("{}:{}", pane.window_index, pane.window_name)
-    } else {
-        pane.window_name.clone()
-    }
+    claude.pane.as_ref().map_or_else(
+        || claude.folder().into_owned(),
+        |pane| window::label(pane, &pane.window_name),
+    )
 }
 
 /// `[detail ]age`; the icon already shows the status, and the detail (tool name, or the shell a done
