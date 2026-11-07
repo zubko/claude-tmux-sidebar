@@ -8,6 +8,7 @@ use crate::context::Context;
 use crate::listing;
 use crate::session::context_window::ContextWindows;
 use crate::session::live::{self, Claude};
+use crate::session::seed::Seeded;
 use crate::session::transcript::cache::Transcripts;
 use crate::tmux::{
     self,
@@ -34,29 +35,20 @@ pub struct Snapshot {
     pub context_windows: ContextWindows,
 }
 
-/// Reads tmux, the state files and the transcripts that changed since `transcripts`.
+/// What the loop keeps from one load to the next.
+#[derive(Debug, Default)]
+pub struct Caches {
+    pub transcripts: Transcripts,
+    pub seeded: Seeded,
+}
+
+/// Reads tmux, the state files and the transcripts that changed since the last load.
 /// `me` is the sidebar pane, or the pane a popup was opened from.
-pub fn load(
-    ctx: &Context,
-    me: Option<PaneId>,
-    popup: bool,
-    transcripts: Transcripts,
-) -> (Snapshot, Transcripts) {
+pub fn load(ctx: &Context, me: Option<PaneId>, popup: bool, caches: Caches) -> (Snapshot, Caches) {
     let panes = tmux::panes();
+    let seeded = caches.seeded.seed(ctx, &panes);
     let claudes = live::load(&ctx.state_dir, &ctx.socket, &panes);
-    let transcripts = transcripts.refresh(
-        claudes
-            .iter()
-            .map(|c| Path::new(c.record.transcript.as_str()))
-            .filter(|p| !p.as_os_str().is_empty()),
-    );
-    let claudes: Vec<Claude> = claudes
-        .into_iter()
-        .map(|c| Claude {
-            latest: transcripts.latest(&c.record.transcript),
-            ..c
-        })
-        .collect();
+    let (claudes, transcripts) = with_transcripts(claudes, caches.transcripts);
     let shown = window_panes(&panes, tmux::global_option(SHOW_WINDOWS_OPTION).as_deref());
     let groups = listing::groups(&tmux::sessions(), &claudes, shown);
     let context_windows = tmux::global_option(CONTEXT_WINDOWS_OPTION)
@@ -66,7 +58,31 @@ pub fn load(
         context_windows,
         ..from_parts(rows::rows(&groups), &panes, me, popup)
     };
-    (snapshot, transcripts)
+    (
+        snapshot,
+        Caches {
+            transcripts,
+            seeded,
+        },
+    )
+}
+
+/// Re-reads the transcripts that changed and gives each session what its transcript says.
+fn with_transcripts(claudes: Vec<Claude>, transcripts: Transcripts) -> (Vec<Claude>, Transcripts) {
+    let transcripts = transcripts.refresh(
+        claudes
+            .iter()
+            .map(|c| Path::new(c.record.transcript.as_str()))
+            .filter(|p| !p.as_os_str().is_empty()),
+    );
+    let claudes = claudes
+        .into_iter()
+        .map(|c| Claude {
+            latest: transcripts.latest(&c.record.transcript),
+            ..c
+        })
+        .collect();
+    (claudes, transcripts)
 }
 
 /// The panes whose windows are listed even without Claude: all of them with `@cts_show_windows on`,

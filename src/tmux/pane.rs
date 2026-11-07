@@ -3,11 +3,11 @@
 use std::fmt;
 
 /// A pane id such as `%12`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PaneId(u32);
 
 /// A window id such as `@3`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WindowId(u32);
 
 impl PaneId {
@@ -35,10 +35,12 @@ impl fmt::Display for WindowId {
 }
 
 /// One pane of the tmux server.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[allow(clippy::struct_excessive_bools)] // mirrors tmux's own flags
 pub struct Pane {
     pub id: PaneId,
+    /// The process the pane runs, usually its shell.
+    pub pid: u32,
     pub session: String,
     pub window_index: u32,
     pub pane_index: u32,
@@ -53,7 +55,7 @@ pub struct Pane {
 }
 
 /// The `list-panes -F` format that [`parse`] reads.
-pub const FORMAT: &str = "#{pane_id}\t#{session_name}\t#{window_index}\t#{pane_index}\t#{window_id}\t\
+pub const FORMAT: &str = "#{pane_id}\t#{pane_pid}\t#{session_name}\t#{window_index}\t#{pane_index}\t#{window_id}\t\
                           #{@cts_sidebar}\t#{pane_active}\t#{pane_last}\t#{window_active}\t#{session_windows}\t#{window_name}";
 
 /// Parses `list-panes -F FORMAT` output, skipping malformed lines.
@@ -63,17 +65,15 @@ pub fn parse(output: &str) -> Vec<Pane> {
 
 fn parse_line(line: &str) -> Option<Pane> {
     // Last field and splitn: a window name may contain a tab.
-    let fields: Vec<&str> = line.splitn(11, '\t').collect();
+    let fields: Vec<&str> = line.splitn(12, '\t').collect();
     let [
         id,
+        pid,
         session,
         window_index,
         pane_index,
         window_id,
-        sidebar,
-        active,
-        last,
-        window_active,
+        bools @ ..,
         session_windows,
         window_name,
     ] = fields.as_slice()
@@ -82,16 +82,28 @@ fn parse_line(line: &str) -> Option<Pane> {
     };
     Some(Pane {
         id: PaneId::parse(id)?,
+        pid: pid.parse().ok()?,
         session: (*session).to_owned(),
         window_index: window_index.parse().ok()?,
         pane_index: pane_index.parse().ok()?,
         session_windows: session_windows.parse().ok()?,
         window_id: WindowId::parse(window_id)?,
         window_name: (*window_name).to_owned(),
+        ..flags(bools)?
+    })
+}
+
+/// The `#{@cts_sidebar}`, `#{pane_active}`, `#{pane_last}` and `#{window_active}` fields.
+fn flags(fields: &[&str]) -> Option<Pane> {
+    let [sidebar, active, last, window_active] = fields else {
+        return None;
+    };
+    Some(Pane {
         sidebar: *sidebar == "1",
         active: *active == "1",
         last: *last == "1",
         window_active: *window_active == "1",
+        ..Pane::default()
     })
 }
 
@@ -121,6 +133,7 @@ pub mod fixture {
     pub fn pane(id: u32, window: u32) -> Pane {
         Pane {
             id: PaneId(id),
+            pid: 0,
             session: "s".to_owned(),
             window_index: window,
             pane_index: id,
@@ -136,61 +149,4 @@ pub mod fixture {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::fixture::pane;
-    use super::*;
-
-    #[test]
-    fn ids_round_trip() {
-        assert_eq!(
-            PaneId::parse("%12").map(|p| p.to_string()),
-            Some("%12".to_owned())
-        );
-        assert_eq!(
-            WindowId::parse("@3").map(|w| w.to_string()),
-            Some("@3".to_owned())
-        );
-        assert_eq!(PaneId::parse("12"), None);
-    }
-
-    #[test]
-    fn parses_list_panes_output() {
-        let panes = parse(
-            "%1\twork\t2\t0\t@4\t\t1\t0\t1\t3\tapi\n%2\twork\t2\t1\t@4\t1\t0\t1\t1\t3\ta\tb\nbroken",
-        );
-        assert_eq!(panes.len(), 2);
-        assert!(panes.first().is_some_and(|p| p.active
-            && !p.sidebar
-            && p.window_index == 2
-            && p.session_windows == 3
-            && p.window_name == "api"));
-        assert!(
-            panes
-                .get(1)
-                .is_some_and(|p| p.sidebar && p.last && p.window_name == "a\tb")
-        );
-    }
-
-    #[test]
-    fn focused_prefers_active_then_last() {
-        let sidebar = Pane {
-            sidebar: true,
-            active: true,
-            ..pane(1, 0)
-        };
-        let plain = [sidebar.clone(), pane(2, 0), pane(3, 0)];
-        let with_last = [
-            sidebar,
-            pane(2, 0),
-            Pane {
-                last: true,
-                ..pane(3, 0)
-            },
-        ];
-        assert_eq!(focused(&plain, WindowId(0)).map(|p| p.id), Some(PaneId(2)));
-        assert_eq!(
-            focused(&with_last, WindowId(0)).map(|p| p.id),
-            Some(PaneId(3))
-        );
-    }
-}
+mod tests;

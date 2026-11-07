@@ -19,12 +19,20 @@ pub fn alive(pid: u32) -> bool {
 
 /// The pid of the Claude Code process among this process's ancestors.
 pub fn claude_ancestor() -> Option<u32> {
-    iter::successors(Some(std::os::unix::process::parent_id()), |&pid| {
-        parent_of(pid)
-    })
-    .take(MAX_ANCESTORS)
-    .take_while(|&pid| pid > 1)
-    .find(|&pid| is_claude(&ps(pid, "comm="), || ps(pid, "args=")))
+    ancestors(std::os::unix::process::parent_id())
+        .find(|&pid| is_claude(&ps(pid, "comm="), || ps(pid, "args=")))
+}
+
+/// Whether `pid` is `ancestor` or runs under it, as far up as [`claude_ancestor`] looks.
+pub fn runs_under(pid: u32, ancestor: u32) -> bool {
+    ancestors(pid).any(|p| p == ancestor)
+}
+
+/// `start` and its parents, nearest first, stopping short of the process tree's root.
+fn ancestors(start: u32) -> impl Iterator<Item = u32> {
+    iter::successors(Some(start), |&pid| parent_of(pid))
+        .take(MAX_ANCESTORS)
+        .take_while(|&pid| pid > 1)
 }
 
 /// Claude runs as `claude`, or as `node .../@anthropic-ai/claude-code/cli.js` when installed with npm.
@@ -58,6 +66,14 @@ mod tests {
     #[test]
     fn this_process_is_alive() {
         assert!(alive(std::process::id()));
+    }
+
+    #[test]
+    fn a_process_runs_under_its_parent() {
+        let me = std::process::id();
+        assert!(runs_under(me, me));
+        assert!(runs_under(me, std::os::unix::process::parent_id()));
+        assert!(!runs_under(me, 1));
     }
 
     #[test]

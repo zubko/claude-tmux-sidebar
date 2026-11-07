@@ -59,6 +59,22 @@ pub fn write(dir: &Path, record: &Record) -> io::Result<()> {
         .inspect_err(|_| remove(&tmp))
 }
 
+/// Writes the session's state file only when there is none yet, and says whether it did.
+pub fn write_new(dir: &Path, record: &Record) -> io::Result<bool> {
+    let target = path(dir, &record.session_id);
+    let tmp = target.with_extension(format!("json.{}", std::process::id()));
+    let json = serde_json::to_vec(record).map_err(io::Error::other)?;
+    write_private(&tmp, &json)?;
+    // A hard link fails when the target exists; a rename would replace a record a hook just wrote.
+    let linked = match fs::hard_link(&tmp, &target) {
+        Ok(()) => Ok(true),
+        Err(e) if e.kind() == io::ErrorKind::AlreadyExists => Ok(false),
+        Err(e) => Err(e),
+    };
+    remove(&tmp);
+    linked
+}
+
 fn write_private(path: &Path, bytes: &[u8]) -> io::Result<()> {
     OpenOptions::new()
         .write(true)
@@ -102,6 +118,27 @@ mod tests {
         let mode = fs::metadata(path(&state, "s1"))?.permissions().mode() & 0o777;
         assert_eq!(mode, PRIVATE_FILE);
         assert_eq!(read(&state, "s1"), Some(record));
+        assert_eq!(read_all(&state).len(), 1);
+        Ok(())
+    }
+
+    #[test]
+    fn write_new_leaves_an_existing_file_alone() -> io::Result<()> {
+        let dir = tempfile::tempdir()?;
+        let state = dir.path().join("state");
+        ensure_dir(&state)?;
+        let first = Record {
+            session_id: "s1".to_owned(),
+            cwd: "/first".to_owned(),
+            ..Record::default()
+        };
+        let second = Record {
+            cwd: "/second".to_owned(),
+            ..first.clone()
+        };
+        assert!(write_new(&state, &first)?);
+        assert!(!write_new(&state, &second)?);
+        assert_eq!(read(&state, "s1"), Some(first));
         assert_eq!(read_all(&state).len(), 1);
         Ok(())
     }

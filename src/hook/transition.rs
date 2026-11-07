@@ -1,6 +1,6 @@
 //! The status state machine: how each hook event changes a session's status.
 
-use super::event::Event;
+use super::event::{Event, SHELL};
 use crate::session::{Record, Status};
 
 /// `AskUserQuestion` blocks on the user like an approval prompt.
@@ -30,7 +30,7 @@ pub struct Change {
 pub fn next(event: &Event<'_>, prev: Option<&Record>) -> Outcome {
     let prev_status = prev.map(|r| r.state);
     let background = match *event {
-        Event::Stop { busy } => busy.is_some(),
+        Event::Stop { busy } => busy.is_some_and(|kind| kind != SHELL),
         // A new process has no background tasks yet.
         Event::SessionStart {
             source: "startup" | "resume",
@@ -71,6 +71,8 @@ fn step<'a>(event: &Event<'a>, prev: Option<Status>, background: bool, answered:
         Event::PermissionRequest { tool, .. } => Step::To(Status::Waiting, tool),
         Event::Notification { kind, .. } => notification(kind, prev, background, answered),
         Event::Elicitation { .. } => Step::To(Status::Waiting, ""),
+        // A shell uses no model, and a server started in the background may never end.
+        Event::Stop { busy: Some(SHELL) } => Step::To(Status::Done, busy_detail(SHELL)),
         // Background tasks keep working after the turn; their completion wakes Claude, which stops again.
         Event::Stop { busy: Some(kind) } => Step::To(Status::Running, busy_detail(kind)),
         Event::Stop { busy: None } => Step::To(Status::Done, ""),
@@ -159,16 +161,28 @@ fn notification(
 fn busy_detail(kind: &str) -> &'static str {
     match kind {
         "subagent" => "Agent",
-        "shell" => "Shell",
+        SHELL => "Shell",
         _ => "Task",
     }
 }
 
-/// Keeps the tool name visible while waiting for approval or an MCP elicitation, which carry none.
+/// Keeps the tool name visible while waiting for approval or an MCP elicitation, which carry none,
+/// and the background shell of a done session through `idle_prompt`.
 fn carry_detail(status: Status, detail: &str, event: &Event<'_>, prev: Option<&Record>) -> String {
-    let carries = status == Status::Waiting || matches!(event, Event::ElicitationResult { .. });
-    prev.filter(|_| carries && detail.is_empty())
-        .filter(|r| matches!(r.state, Status::Waiting | Status::Running))
+    let carries = |r: &&Record| match r.state {
+        Status::Waiting | Status::Running => {
+            status == Status::Waiting || matches!(event, Event::ElicitationResult { .. })
+        }
+        Status::Done => matches!(
+            event,
+            Event::Notification {
+                kind: "idle_prompt",
+                ..
+            }
+        ),
+        Status::Idle => false,
+    };
+    prev.filter(|r| detail.is_empty() && carries(r))
         .map_or(detail, |r| r.detail.as_str())
         .to_owned()
 }

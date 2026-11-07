@@ -12,10 +12,12 @@ Statuses come from these Claude Code hooks:
 
 | Status | Hook |
 |---|---|
-| running | `UserPromptSubmit` / `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `ElicitationResult`, or `Stop` whose `background_tasks` still has a running task |
+| running | `UserPromptSubmit` / `PreToolUse` / `PostToolUse` / `PostToolUseFailure` / `ElicitationResult`, or `Stop` whose `background_tasks` still has a running task that is not a shell or a monitor |
 | waiting for you | `PermissionRequest` / `Elicitation` / `PreToolUse(AskUserQuestion)` / `Notification(permission_prompt, elicitation_dialog, elicitation_url_dialog)` |
-| done | `Stop` with no running background task, `StopFailure` (the turn ended on an API error) |
-| idle | `SessionStart`, `Notification(idle_prompt)` (unless background tasks are running) |
+| done | `Stop` with no running background task except shells and monitors (a running shell shows `Shell` as the detail), `StopFailure` (the turn ended on an API error) |
+| idle | `SessionStart`, `Notification(idle_prompt)` (unless background tasks other than shells are running) |
+
+A shell started in the background uses no model, and a dev server or a log stream may never end. So a running shell alone does not keep a session running. When the shell ends, Claude gets a task notification, which counts as a new prompt.
 
 Those notifications fire only after a prompt has waited about six seconds, so one can arrive after the prompt was answered. Once a wait ends, they are ignored until the next tool call (`PreToolUse`), `PermissionRequest`, `Elicitation` or prompt you send. A sandboxed command's network request raises no `PermissionRequest`, so the next `PreToolUse` lets its notification through again.
 

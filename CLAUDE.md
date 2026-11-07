@@ -51,6 +51,10 @@ status edge cases and the release steps. This file is the short guide for an age
    `tmux list-panes -a`, the state files, and the tail of each session's transcript (context usage). It drops state
    files whose pane or process is gone, and closes itself when its window has no other pane. Each step reads input,
    applies the pure `update(model, msg) -> (model, effects)` and runs the effects (`effect`).
+   [fork] Before it reads the state files, `session::seed` writes an idle record for every Claude that Claude Code
+   lists in `~/.claude/sessions/<pid>.json` with a pane of this server but no state file (its `SessionStart` hook
+   was dropped, which can happen when many sessions start at once after a reboot). The record is written only when
+   the file is still missing, and each session is checked once per sidebar process.
 4. `next` / `prev` (`jump`) and the popup (`popup` / `popup-ui`) use the same loaders without a sidebar pane.
 
 Statuses in short (the full table is in `CONTRIBUTING.md`): prompt and tool events mean running; `PermissionRequest`,
@@ -58,9 +62,12 @@ Statuses in short (the full table is in `CONTRIBUTING.md`): prompt and tool even
 background means done. A new session starts idle; `SessionStart` keeps the status the session already had.
 `idle_prompt` turns only a running or waiting session idle, and does nothing while background work runs. Subagent
 events carry the parent's `session_id`; only the agent that raised a prompt ends the wait.
+[fork] A background shell does not count as background work: a dev server may never end. A `Stop` that leaves only
+shells running means done with the detail `Shell`, and `idle_prompt` keeps that detail.
 
 Environment: `TMUX_PANE` and `TMUX` (socket) say where the process runs; `CTS_STATE_DIR` overrides the state
 directory (tests use it); `CTS_DEBUG=1` appends raw hook payloads to `debug.log` in the state directory.
+[fork] `CLAUDE_CONFIG_DIR` (default `~/.claude`) is where the sidebar reads Claude Code's own session list.
 
 ## Module map (`src/`)
 
@@ -74,6 +81,7 @@ Pure modules turn values into values. Side effects stay at the edges: `tmux`, `s
 | `tmux`, `tmux::pane` | run tmux; parse `list-panes -F` into `Pane` (`PaneId` `%n`, `WindowId` `@n`) |
 | `session` | `Record` (the state file format), `Status`; `store` reads and writes the files |
 | `session::live` | which state files are live sessions of this server (`Claude` = record + pane + transcript) |
+| `session::seed` | [fork] a record for a Claude that Claude Code lists in a pane of this server but no hook recorded |
 | `session::transcript` | the context tokens and model from the transcript tail; `cache` re-reads only changed files |
 | `session::context_window` | [fork] `@cts_context_windows` parsing; tokens to a percent of the window |
 | `process` | is a pid alive; which Claude process started this hook |
@@ -147,7 +155,7 @@ every sidebar. Ask the user first: this changes their running tmux.
 
 ## Releases and the fork
 
-- [fork] The version has a fork suffix (`0.7.5-zubko.1`) in `Cargo.toml`, `Cargo.lock`, `.claude-plugin/plugin.json`,
+- [fork] The version has a fork suffix (`0.7.5-zubko.2`) in `Cargo.toml`, `Cargo.lock`, `.claude-plugin/plugin.json`,
   `.claude-plugin/marketplace.json` and `CHANGELOG.md`; the release workflow checks that they match and that the tag
   is new.
 - [fork] The README install lines, the manifest links and the plugin marketplace name (`zubko`) point at this fork.
