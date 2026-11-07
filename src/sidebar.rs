@@ -6,6 +6,7 @@ mod input;
 pub mod rows;
 pub mod selection;
 pub mod snapshot;
+pub mod theme;
 pub mod update;
 mod view;
 
@@ -23,6 +24,7 @@ use crate::session::store;
 use crate::tmux::{self, pane::PaneId};
 use effect::Next;
 use snapshot::Caches;
+use theme::Theme;
 use update::{Model, Msg};
 
 /// Input wait per step; also the spinner speed.
@@ -89,6 +91,7 @@ fn event_loop(terminal: &mut DefaultTerminal, env: &Env<'_>) -> io::Result<()> {
         help: env.help,
         height,
         now: context::now(),
+        theme: Theme::from_options(tmux::global_option),
         ..Model::default()
     };
     let start = Loop {

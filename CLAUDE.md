@@ -21,7 +21,7 @@ status edge cases and the release steps. This file is the short guide for an age
 - The same list in a popup (`prefix B`). Sessions without Claude are listed too, so the sidebar is also a session
   switcher.
 - Options are tmux global options with the prefix `@cts_` (`@cts_width`, `@cts_toggle_key`, `@cts_lang`, ...). See
-  `README.md` for the list.
+  `README.md` for the list. The colors are `@cts_color_*` options (`sidebar::theme`, defaults in `Theme::DEFAULT`).
 
 ## Repo layout
 
@@ -89,7 +89,7 @@ Pure modules turn values into values. Side effects stay at the edges: `tmux`, `s
 | `control`, `control::layout` | open / close / ensure / fix-width; the saved layout |
 | `listing` | groups: tmux sessions in tmux order, then "outside tmux"; [fork] windows without Claude |
 | `jump` | the next / previous done or waiting Claude |
-| `sidebar` | the loop; `snapshot` (load), `rows`, `selection`, `update` (pure), `view` (render), `input`, `effect` |
+| `sidebar` | the loop; `snapshot` (load), `rows`, `selection`, `update` (pure), `view` (render), `theme` (colors), `input`, `effect` |
 | `sidebar::update::destination` | [fork] where a row goes: a Claude pane, a window's pane, or a session |
 | `text`, `i18n` | width, truncation, ages, token counts, shell quoting; `en` / `ja` strings |
 
@@ -120,7 +120,8 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
   unlisted or empty model shows the token count (`61k`). Never hardcode window sizes or guess them from the model
   name. The real size for an account comes from `claude -p --model <m> --output-format json "hi"` →
   `modelUsage.<id>.contextWindow` (a JSON array when `verbose` is on, one object otherwise).
-- [fork] The accent color (title, current-window bar) is Claude's coral, `#D97757` (`ACCENT` in `sidebar::view`).
+- Colors come from `Theme` (`sidebar::theme`): `Theme::DEFAULT` overridden by the `@cts_color_*` options, read once
+  when the sidebar opens. [fork] The default accent is Claude's coral, `#D97757`.
 - The list scrolls to keep the selected row and its lines on screen. The offset is derived from the selection and
   the height on every draw and click (`rows::offset`), never stored.
 - Keys in the list: `j` / `k` / arrows move, `g` / `G` first / last, `n` / `p` next / previous done or waiting Claude,

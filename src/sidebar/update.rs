@@ -7,6 +7,7 @@ use destination::destination;
 use super::rows::{self, Row, RowKey};
 use super::selection::{self, Selection};
 use super::snapshot::Snapshot;
+use super::theme::Theme;
 use crate::jump::Direction;
 use crate::tmux::pane::{PaneId, WindowId};
 
@@ -22,6 +23,7 @@ pub struct Model {
     pub height: u16,
     /// The key help is shown on the last line.
     pub help: bool,
+    pub theme: Theme,
 }
 
 impl Model {

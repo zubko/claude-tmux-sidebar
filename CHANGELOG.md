@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 Takes the colors, the status line command, the scrolling list and the active-window background from upstream 0.8.0 to 0.12.0. The upstream window tree (`@cts_label`) and the context window guess are not taken.
 
+### Added
+
+- `@cts_color_accent`, `@cts_color_cursor`, `@cts_color_active`, `@cts_color_muted`, `@cts_color_dim`, `@cts_color_waiting`, `@cts_color_running`, `@cts_color_done`, `@cts_color_warning` and `@cts_color_critical` options set the sidebar's colors as a basic tmux color name, `colourN` or `#rrggbb`. Without them the sidebar looks as before.
+
 ### Changed
 
 - `@cts_show_windows` is renamed `@cts_all_windows`, the name upstream chose for the same option.

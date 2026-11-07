@@ -4,10 +4,10 @@
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
-use super::{ACCENT, DIM, MUTED};
 use crate::session::Status;
 use crate::session::context_window::ContextUse;
 use crate::session::live::Claude;
+use crate::sidebar::theme::Theme;
 use crate::sidebar::update::Model;
 use crate::text::{self, age, truncate};
 use crate::tmux::pane::Pane;
@@ -19,18 +19,18 @@ const MIN_NAME_WIDTH: usize = 12;
 const CONTEXT_WARN: u8 = 50;
 const CONTEXT_ALARM: u8 = 80;
 
-pub fn look(status: Status) -> (&'static str, Color) {
+pub fn look(theme: &Theme, status: Status) -> (&'static str, Color) {
     match status {
-        Status::Waiting => ("◆", Color::Yellow),
-        Status::Running => ("●", Color::Green),
-        Status::Done => ("✓", Color::Cyan),
-        Status::Idle => ("○", DIM),
+        Status::Waiting => ("◆", theme.waiting),
+        Status::Running => ("●", theme.running),
+        Status::Done => ("✓", theme.done),
+        Status::Idle => ("○", theme.dim),
     }
 }
 
 /// `▌● 2:api                             Bash 3s `; the bar marks the window you are in.
 pub fn line(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
-    let (_, color) = look(claude.record.state);
+    let (_, color) = look(&model.theme, claude.record.state);
     let right = truncate(
         &status_text(model, claude),
         width.saturating_sub(MIN_NAME_WIDTH),
@@ -40,7 +40,7 @@ pub fn line(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     let here = here(model, claude);
     let used = text::width(&name) + text::width(&right);
     Line::from(vec![
-        marker(here),
+        marker(&model.theme, here),
         icon(model, claude.record.state),
         Span::raw(" "),
         Span::styled(name, bold_if(here)),
@@ -53,11 +53,12 @@ pub fn line(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
 /// `▌└ fix the failing test…               42% `: the prompt lines up with the name above it.
 pub fn detail(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     let record = &claude.record;
+    let theme = &model.theme;
     let windows = &model.snapshot.context_windows;
     let (context, color) = match claude.context().map(|c| windows.resolve(c)) {
-        Some(ContextUse::Percent(p)) => (format!("{p}%"), context_color(p)),
-        Some(ContextUse::Tokens(n)) => (text::tokens(n), MUTED),
-        None => (String::new(), MUTED),
+        Some(ContextUse::Percent(p)) => (format!("{p}%"), context_color(theme, p)),
+        Some(ContextUse::Tokens(n)) => (text::tokens(n), theme.muted),
+        None => (String::new(), theme.muted),
     };
     let reserved = if context.is_empty() {
         0
@@ -67,9 +68,9 @@ pub fn detail(model: &Model, claude: &Claude, width: usize) -> Line<'static> {
     let prompt = truncate(&record.prompt, width.saturating_sub(4 + reserved));
     let gap = width.saturating_sub(4 + text::width(&prompt) + text::width(&context));
     Line::from(vec![
-        marker(here(model, claude)),
-        Span::styled("└ ", DIM),
-        Span::styled(prompt, MUTED),
+        marker(theme, here(model, claude)),
+        Span::styled("└ ", theme.dim),
+        Span::styled(prompt, theme.muted),
         Span::raw(" ".repeat(gap)),
         Span::styled(context, color),
         Span::raw(" "),
@@ -81,19 +82,24 @@ pub fn window(model: &Model, pane: &Pane, width: usize) -> Line<'static> {
     let here = Some(pane.window_id) == model.snapshot.window;
     let name = truncate(&label(pane), width.saturating_sub(4));
     Line::from(vec![
-        marker(here),
+        marker(&model.theme, here),
         Span::raw("  "),
-        Span::styled(name, Style::new().fg(MUTED).add_modifier(bold_if(here))),
+        Span::styled(
+            name,
+            Style::new()
+                .fg(model.theme.muted)
+                .add_modifier(bold_if(here)),
+        ),
     ])
 }
 
-fn context_color(percent: u8) -> Color {
+fn context_color(theme: &Theme, percent: u8) -> Color {
     if percent >= CONTEXT_ALARM {
-        Color::Red
+        theme.critical
     } else if percent >= CONTEXT_WARN {
-        Color::Yellow
+        theme.warning
     } else {
-        MUTED
+        theme.muted
     }
 }
 
@@ -106,9 +112,9 @@ fn here(model: &Model, claude: &Claude) -> bool {
 }
 
 /// The bar on the left edge for the window you are in.
-fn marker(here: bool) -> Span<'static> {
+fn marker(theme: &Theme, here: bool) -> Span<'static> {
     if here {
-        Span::styled("▌", ACCENT)
+        Span::styled("▌", theme.accent)
     } else {
         Span::raw(" ")
     }
@@ -116,7 +122,7 @@ fn marker(here: bool) -> Span<'static> {
 
 /// The status icon; a running session spins.
 fn icon(model: &Model, status: Status) -> Span<'static> {
-    let (icon, color) = look(status);
+    let (icon, color) = look(&model.theme, status);
     let spinner = SPINNER
         .get(model.frame % SPINNER.len())
         .filter(|_| status == Status::Running);

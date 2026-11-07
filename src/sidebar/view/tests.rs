@@ -12,6 +12,7 @@ use crate::tmux::pane::Pane;
 use crate::tmux::pane::fixture::pane;
 
 const WIDTH: u16 = 34;
+const CURSOR: Color = Theme::DEFAULT.cursor;
 
 fn record(state: Status, detail: &str) -> Record {
     Record {
@@ -169,6 +170,28 @@ fn the_heading_stands_for_this_window_when_it_has_no_row() {
     assert!(text(&line).starts_with("▌▾ work"), "{}", text(&line));
     assert_eq!(line.width(), usize::from(WIDTH));
     assert!(line.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
+}
+
+#[test]
+fn the_title_and_status_use_the_configured_colors() {
+    let theme = Theme {
+        accent: Color::Magenta,
+        done: Color::Indexed(82),
+        ..Theme::default()
+    };
+    let model = Model {
+        theme,
+        ..model(Status::Done, "", false)
+    };
+    let lines = lines(&model, &EN, WIDTH, model.height);
+    let colors = |i: usize| -> Vec<Option<Color>> {
+        lines
+            .get(i)
+            .map(|l| l.spans.iter().map(|s| s.style.fg).collect())
+            .unwrap_or_default()
+    };
+    assert!(colors(0).contains(&Some(theme.accent)));
+    assert!(colors(3).contains(&Some(theme.done)));
 }
 
 mod session;

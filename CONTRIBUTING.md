@@ -49,7 +49,7 @@ Code layout (`src/`): pure modules turn values into values, and side effects sta
 | `session::context_window` | the `@cts_context_windows` sizes, and tokens as a share of the window |
 | `hook` | hook payload → status transition (`transition` is a pure state machine) |
 | `control` | opening / closing sidebars and restoring layouts |
-| `sidebar` | the list UI: `update` is a pure `(model, msg) → (model, effects)` function (`destination` picks where a row goes), `view` renders, `effect` runs effects |
+| `sidebar` | the list UI: `update` is a pure `(model, msg) → (model, effects)` function (`destination` picks where a row goes), `view` renders, `theme` reads the `@cts_color_*` options, `effect` runs effects |
 | `listing`, `jump` | grouping in tmux order (windows without Claude with `@cts_all_windows on`), next / previous done or waiting session |
 | `text`, `i18n` | display width, truncation, ages and token counts; English and Japanese strings |
 

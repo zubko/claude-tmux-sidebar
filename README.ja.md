@@ -70,9 +70,26 @@ set -g @cts_lang ja           # en / ja
 set -g @cts_help on           # 下端のキー操作ヘルプを表示
 set -g @cts_all_windows off   # Claude のいないウィンドウも表示
 set -g @cts_hook_index 77     # tmux hook 配列のインデックス（衝突時のみ変更）
+set -g @cts_color_accent '#D97757'  # 色（下の表を参照）
+set -g @cts_color_active colour235  # 今いるウィンドウの行の背景
 ```
 
 tmux が既に割り当てているキー（例: `C-b` は `send-prefix`）を指定すると、プラグイン側の割り当てで上書きされます。
+
+色は役割ごとに別の設定で、tmux の色の書き方のうち次のものを使えます。色名（`black` `red` `green` `yellow` `blue` `magenta` `cyan` `white` と、`brightred` のような `bright` 付き、`default`）、`colour0`〜`colour255`（`color0`〜`color255` も可）、`#rrggbb` のどれかです。未設定や読めない値なら既定の色のままです。`coral` や `grey50` のような tmux の他の色名も読めないので、`#rrggbb` で書いてください。サイドバーは開くときに読むので、変えたら開き直してください。
+
+| 設定 | 色を付ける箇所 | 既定値 |
+|---|---|---|
+| `@cts_color_accent` | タイトルと、今いるウィンドウのカーソル行にあるウィンドウ番号 | `#D97757` |
+| `@cts_color_cursor` | カーソル行の背景 | `colour237` |
+| `@cts_color_active` | 今いるウィンドウの行の背景 | `colour235` |
+| `@cts_color_muted` | 補足の文字（プロンプト、ヘルプの説明、Claude のいないウィンドウ） | `colour245` |
+| `@cts_color_dim` | 薄い文字（区切り線、待機の印） | `brightblack` |
+| `@cts_color_waiting` | 承認待ちの印 | `yellow` |
+| `@cts_color_running` | 稼働中の印 | `green` |
+| `@cts_color_done` | 完了の印 | `cyan` |
+| `@cts_color_warning` | context window の使用率（50% から） | `yellow` |
+| `@cts_color_critical` | context window の使用率（80% から） | `red` |
 
 各行の使用率は、モデルの context window に対する割合です。window のサイズは `@cts_context_windows` から読みます。transcript に出るモデル ID と `model=tokens` の組を並べたリストです。リストにないモデルは、割合ではなくトークン数（`61k`）を表示します。サイズは `claude -p --model <model> --output-format json "hi"` の結果の `modelUsage.<model id>.contextWindow` で確認できます。
 
