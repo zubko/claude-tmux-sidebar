@@ -22,10 +22,13 @@ status edge cases and the release steps. This file is the short guide for an age
   switcher.
 - Options are tmux global options with the prefix `@cts_` (`@cts_width`, `@cts_toggle_key`, `@cts_lang`, ...). See
   `README.md` for the list. The colors are `@cts_color_*` options (`sidebar::theme`, defaults in `Theme::DEFAULT`).
+- `claude-tmux-sidebar statusline` records a session's real context window size from Claude Code's status line
+  input; the user adds one line to their status line script.
 
 ## Repo layout
 
-- `src/` is the one binary, `claude-tmux-sidebar`. `tests/hook.rs` runs the real binary end to end.
+- `src/` is the one binary, `claude-tmux-sidebar`. `tests/hook.rs` and `tests/statusline.rs` run the real binary end
+  to end.
 - `bin/cts` runs the binary (tmux side). `bin/cts-hook` runs `claude-tmux-sidebar hook` (Claude Code side). Both are
   small `sh` wrappers that install the binary first when it is missing.
 - `scripts/fetch-binary.sh` installs `bin/claude-tmux-sidebar`: the release binary for this checkout's version
@@ -44,6 +47,10 @@ status edge cases and the release steps. This file is the short guide for an age
    turns the event into a status (`hook::transition`, a pure state machine), merges it into the session's record
    (`hook::compose`) and writes `~/.cache/claude-tmux-sidebar/<session_id>.json`. `SessionEnd` removes the file.
    A hook never fails Claude: errors are swallowed and the wrapper skips the event while the binary is missing.
+   `statusline` (`session::statusline`, the status line input on stdin) writes the session's context window size to
+   `<session_id>.window`. It is a separate file because the status line and the hooks run at the same time, so a
+   rewrite of the state file could undo a status a hook just wrote. The sidebar sweeps size files without a state
+   file; `remove_session` removes both.
 2. tmux hooks run `cts ensure` / `cts fix-width`: they add a sidebar pane to a window when the sidebar is enabled
    (`@cts_enabled`), and restore its width after layout changes. The sidebar pane runs `claude-tmux-sidebar sidebar`.
    The window's layout from before the sidebar is saved in window options and restored on close (`control::layout`).
@@ -82,8 +89,9 @@ Pure modules turn values into values. Side effects stay at the edges: `tmux`, `s
 | `session` | `Record` (the state file format), `Status`; `store` reads and writes the files |
 | `session::live` | which state files are live sessions of this server (`Claude` = record + pane + transcript) |
 | `session::seed` | [fork] a record for a Claude that Claude Code lists in a pane of this server but no hook recorded |
+| `session::statusline` | the `statusline` command: the context window size from the status line input |
 | `session::transcript` | the context tokens and model from the transcript tail; `cache` re-reads only changed files |
-| `session::context_window` | [fork] `@cts_context_windows` parsing; tokens to a percent of the window |
+| `session::context_window` | `@cts_context_windows` parsing; tokens to a percent of the window ([fork] no guess: tokens when unlisted) |
 | `process` | is a pid alive; which Claude process started this hook |
 | `hook` | `event` (payload), `transition` (status state machine), `compose` (next record) |
 | `control`, `control::layout` | open / close / ensure / fix-width; the saved layout |
@@ -120,7 +128,8 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 - [fork] Context usage is a share of the window size listed in the `@cts_context_windows` tmux option
   (`model=tokens ...`). The model id is the transcript entry's `requestedModel`, or `message.model` when that is
   empty; the tokens are input plus cache creation plus cache read. Only an exact model id gets a percentage; an
-  unlisted or empty model shows the token count (`61k`). Never hardcode window sizes or guess them from the model
+  unlisted or empty model shows the token count (`61k`). A size recorded by `statusline`
+  (`Record::context_window`) goes before the option. Never hardcode window sizes or guess them from the model
   name. The real size for an account comes from `claude -p --model <m> --output-format json "hi"` →
   `modelUsage.<id>.contextWindow` (a JSON array when `verbose` is on, one object otherwise).
 - Colors come from `Theme` (`sidebar::theme`): `Theme::DEFAULT` overridden by the `@cts_color_*` options, read once
@@ -157,7 +166,8 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
   (`tmux -S <dir>/tmux.sock ...`) and kill only that socket.
 - A tmux client without a UTF-8 locale prints tabs in `-F` output as `_`, and the pane list then parses as empty.
   Set `LANG=en_US.UTF-8` when you run the binary or tmux from a shell.
-- `tests/hook.rs` runs the built binary with `CTS_STATE_DIR` set to a temp dir and `TMUX` unset.
+- `tests/hook.rs` and `tests/statusline.rs` run the built binary with `CTS_STATE_DIR` set to a temp dir and `TMUX`
+  unset.
 
 ## Trying a build in the live sidebar
 

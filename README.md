@@ -97,6 +97,15 @@ The context usage on each row is a share of the model's context window. The wind
 set -g @cts_context_windows 'claude-opus-5-5=1000000 claude-sonnet-4-6=200000'
 ```
 
+You can also let Claude Code report the size: its status line input has each session's real size, which goes before `@cts_context_windows`. Add one line to your [status line](https://code.claude.com/docs/en/statusline) script, after it reads its input, and restart Claude:
+
+```bash
+input=$(cat)
+echo "$input" | ~/.tmux/plugins/claude-tmux-sidebar/bin/cts statusline
+```
+
+The command prints nothing, so the status line stays as it is.
+
 ## Requirements
 
 - tmux 3.2+
@@ -136,7 +145,7 @@ Restart running Claude Code sessions to pick up the hooks.
 
 ## Privacy
 
-Everything stays on your machine. Each Claude session's status is kept in `~/.cache/claude-tmux-sidebar/<session_id>.json`, readable only by you and removed when the session ends. It holds the session ID, working directory, tool name, tmux pane, Claude's process ID, the path of the session's transcript and the first 200 characters of your last prompt. The sidebar reads the context usage from the end of that transcript and does not store it.
+Everything stays on your machine. Each Claude session's status is kept in `~/.cache/claude-tmux-sidebar/<session_id>.json`, readable only by you and removed when the session ends. It holds the session ID, working directory, tool name, tmux pane, Claude's process ID, the path of the session's transcript and the first 200 characters of your last prompt. The sidebar reads the context usage from the end of that transcript and does not store it. With the status line command, the session's context window size is kept next to the state file in `<session_id>.window`.
 
 For debugging, start Claude with `CTS_DEBUG=1` to append raw hook payloads to `~/.cache/claude-tmux-sidebar/debug.log`. **The log contains your prompts and tool inputs** — delete it when done and check it before sharing.
 

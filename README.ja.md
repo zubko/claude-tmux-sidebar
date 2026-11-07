@@ -97,6 +97,15 @@ tmux が既に割り当てているキー（例: `C-b` は `send-prefix`）を�
 set -g @cts_context_windows 'claude-opus-5-5=1000000 claude-sonnet-4-6=200000'
 ```
 
+サイズは Claude Code に教えてもらうこともできます。[status line](https://code.claude.com/docs/en/statusline) の入力にはセッションごとの実際のサイズが入っていて、これは `@cts_context_windows` より優先されます。status line のスクリプトで入力を読んだあとに 1 行足して、Claude を起動し直してください。
+
+```bash
+input=$(cat)
+echo "$input" | ~/.tmux/plugins/claude-tmux-sidebar/bin/cts statusline
+```
+
+このコマンドは何も出力しないので、status line の表示は変わりません。
+
 ## 必要なもの
 
 - tmux 3.2+
@@ -136,7 +145,7 @@ gh attestation verify ~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sideba
 
 ## プライバシー
 
-データは手元のマシンから出ません。各 Claude セッションの状態は `~/.cache/claude-tmux-sidebar/<session_id>.json` に本人だけが読める権限で保存され、セッションが終わると消えます。中身はセッション ID・作業ディレクトリ・ツール名・tmux ペイン・Claude のプロセス ID・セッションの transcript のパス・最後のプロンプトの先頭 200 文字です。context の使用率はサイドバーがその transcript の末尾から読み取り、保存はしません。
+データは手元のマシンから出ません。各 Claude セッションの状態は `~/.cache/claude-tmux-sidebar/<session_id>.json` に本人だけが読める権限で保存され、セッションが終わると消えます。中身はセッション ID・作業ディレクトリ・ツール名・tmux ペイン・Claude のプロセス ID・セッションの transcript のパス・最後のプロンプトの先頭 200 文字です。context の使用率はサイドバーがその transcript の末尾から読み取り、保存はしません。status line のコマンドを使うと、セッションの context window のサイズを状態ファイルの隣の `<session_id>.window` に保存します。
 
 デバッグ用に `CTS_DEBUG=1` を付けて Claude を起動すると、hook の生 payload が `~/.cache/claude-tmux-sidebar/debug.log` に残ります。**このログにはプロンプトやツールの入力がそのまま入る**ので、使い終わったら消し、共有する前に中身を確認してください。
 

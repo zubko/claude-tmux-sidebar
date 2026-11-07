@@ -39,16 +39,20 @@ impl ContextWindows {
     pub fn resolve(&self, context: Context<'_>) -> ContextUse {
         match context {
             Context::Percent(percent) => ContextUse::Percent(percent),
-            Context::Tokens { tokens, model } => {
-                self.0
-                    .get(model)
-                    .map_or(ContextUse::Tokens(tokens), |&size| {
-                        let share = tokens.saturating_mul(100) / size;
-                        ContextUse::Percent(u8::try_from(share.min(100)).unwrap_or(100))
-                    })
-            }
+            Context::Tokens { tokens, model } => self
+                .0
+                .get(model)
+                .map_or(ContextUse::Tokens(tokens), |&size| {
+                    ContextUse::Percent(share(tokens, size))
+                }),
         }
     }
+}
+
+/// `tokens` as a share of a `window` of known, positive size, capped at 100.
+pub fn share(tokens: u64, window: u64) -> u8 {
+    let share = tokens.saturating_mul(100) / window;
+    u8::try_from(share.min(100)).unwrap_or(100)
 }
 
 #[cfg(test)]

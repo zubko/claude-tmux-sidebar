@@ -6,7 +6,7 @@ use std::path::Path;
 
 use itertools::Itertools;
 
-use super::context_window::Context;
+use super::context_window::{self, Context};
 use super::transcript::Latest;
 use super::{Record, store};
 use crate::process;
@@ -22,14 +22,21 @@ pub struct Claude {
 }
 
 impl Claude {
-    /// What the session knows about its context window: nothing used before the first reply, and
-    /// unknown right after a compaction until the next one.
+    /// What the session knows about its context window: a share of the size the status line recorded,
+    /// else the tokens and model for `@cts_context_windows`. Nothing is used before the first reply,
+    /// and the usage is unknown right after a compaction until the next one.
     pub fn context(&self) -> Option<Context<'_>> {
         match &self.latest {
-            Some(latest) => latest.context.as_ref().map(|usage| Context::Tokens {
-                tokens: usage.tokens,
-                model: &usage.model,
-            }),
+            Some(latest) => latest
+                .context
+                .as_ref()
+                .map(|usage| match self.record.context_window {
+                    Some(window) => Context::Percent(context_window::share(usage.tokens, window)),
+                    None => Context::Tokens {
+                        tokens: usage.tokens,
+                        model: &usage.model,
+                    },
+                }),
             None if self.record.transcript.is_empty() => self.record.context.map(Context::Percent),
             None => Some(Context::Percent(0)),
         }
@@ -102,6 +109,7 @@ pub fn load(dir: &Path, socket: &str, panes: &[Pane]) -> Vec<Claude> {
         socket,
         panes: &panes,
     };
+    store::sweep_windows(dir);
     let kept = store::read_all(dir)
         .into_iter()
         .filter_map(|(path, record)| keep_or_remove(&path, record, &server))
@@ -114,7 +122,7 @@ fn keep_or_remove(path: &Path, record: Record, server: &Server<'_>) -> Option<Cl
     match dispose(record, alive, server) {
         Disposition::Keep(claude) => Some(*claude),
         Disposition::Remove => {
-            store::remove(path);
+            store::remove_session(path);
             None
         }
         Disposition::Skip => None,

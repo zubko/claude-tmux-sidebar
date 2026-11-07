@@ -5,6 +5,7 @@
 One binary, `claude-tmux-sidebar`, does everything; `bin/cts` and `bin/cts-hook` are small shell entry points for it. `scripts/fetch-binary.sh` puts the binary in `bin/` on first run: it downloads it from the GitHub release matching the version (verifying its SHA-256), or builds it with `cargo` when no release binary fits. Claude Code skips the hook events that arrive before the binary is ready.
 
 - `claude-tmux-sidebar hook` runs on each Claude Code hook and writes the status, `$TMUX_PANE` and Claude's PID to `~/.cache/claude-tmux-sidebar/<session_id>.json`. `SessionEnd` removes the file.
+- `claude-tmux-sidebar statusline` runs from the user's status line script and writes the session's context window size to `<session_id>.window` next to it, only when the size changed. The size goes before `@cts_context_windows`.
 - `claude-tmux-sidebar toggle`, `ensure`, `fix-width`, … control tmux: tmux hooks such as `after-new-window` add a full-height pane on the left of each window and restore its width after layout changes. Closing the sidebar restores the window's layout from before it opened, when the window still has the size that layout was saved at.
 - `claude-tmux-sidebar sidebar` draws the list and cleans up state files whose pane or process is gone. It closes itself in a window where only the sidebar is left.
 
@@ -47,6 +48,7 @@ Code layout (`src/`): pure modules turn values into values, and side effects sta
 | `session`, `session::live` | the state file format, and which state files are live sessions of this tmux server |
 | `session::transcript` | the tokens and model of the last request, from the end of the transcript (`cache` re-reads only changed files) |
 | `session::context_window` | the `@cts_context_windows` sizes, and tokens as a share of the window |
+| `session::statusline` | the `statusline` command: the context window size from Claude Code's status line input |
 | `hook` | hook payload → status transition (`transition` is a pure state machine) |
 | `control` | opening / closing sidebars and restoring layouts |
 | `sidebar` | the list UI: `update` is a pure `(model, msg) → (model, effects)` function (`destination` picks where a row goes), `view` renders, `theme` reads the `@cts_color_*` options, `effect` runs effects |

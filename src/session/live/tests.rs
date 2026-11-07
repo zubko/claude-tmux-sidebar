@@ -1,5 +1,6 @@
 use super::*;
 use crate::session::context_window::Context;
+use crate::session::transcript::Usage;
 use crate::tmux::pane::fixture::pane;
 
 fn record(id: &str, pane: &str, socket: &str, updated_at: u64) -> Record {
@@ -114,5 +115,24 @@ fn prefers_the_transcript_to_the_old_context() {
         unanswered.context(),
         Some(Context::Percent(0)),
         "nothing used before a reply"
+    );
+}
+
+#[test]
+fn a_recorded_window_size_gives_a_share_before_the_option() {
+    let record = Record {
+        transcript: "/t".to_owned(),
+        context_window: Some(1_000_000),
+        ..Record::default()
+    };
+    let latest = Latest {
+        context: Some(Usage {
+            tokens: 250_000,
+            model: "m".to_owned(),
+        }),
+    };
+    assert_eq!(
+        claude(record, Some(latest)).context(),
+        Some(Context::Percent(25))
     );
 }

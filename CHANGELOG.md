@@ -9,6 +9,7 @@ Takes the colors, the status line command, the scrolling list and the active-win
 ### Added
 
 - `@cts_color_accent`, `@cts_color_cursor`, `@cts_color_active`, `@cts_color_muted`, `@cts_color_dim`, `@cts_color_waiting`, `@cts_color_running`, `@cts_color_done`, `@cts_color_warning` and `@cts_color_critical` options set the sidebar's colors as a basic tmux color name, `colourN` or `#rrggbb`. Without them the sidebar looks as before.
+- `claude-tmux-sidebar statusline` records each session's real context window size from Claude Code's status line input, in `<session_id>.window` next to the state file. Add one line to your status line script, as the README shows, and the row shows a percentage without listing the model in `@cts_context_windows`; the recorded size goes before that option.
 
 ### Changed
 
