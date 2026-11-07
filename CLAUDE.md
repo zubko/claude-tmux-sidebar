@@ -102,7 +102,8 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
   `@cts_all_windows on`). Sessions outside tmux come last under one "(outside tmux)" heading. [fork] Rows outside
   tmux sort by their folder name, then session id.
 - A window with Claude shows the Claude row(s): status icon, window label, tool and age, and a second line with the
-  last prompt and the context usage.
+  last prompt and the context usage. Every Claude session takes two lines: the detail line shows `0%` before the
+  first reply and nothing right after a compaction.
 - With `@cts_all_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`). The
   cursor stops on it. `Enter` or a click goes to the pane the user works in there (`tmux::pane::focused`), never to
   a sidebar pane. `n` / `p` and `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.

@@ -22,7 +22,8 @@ pub struct Claude {
 }
 
 impl Claude {
-    /// What the session knows about its context window.
+    /// What the session knows about its context window: nothing used before the first reply, and
+    /// unknown right after a compaction until the next one.
     pub fn context(&self) -> Option<Context<'_>> {
         match &self.latest {
             Some(latest) => latest.context.as_ref().map(|usage| Context::Tokens {
@@ -30,7 +31,7 @@ impl Claude {
                 model: &usage.model,
             }),
             None if self.record.transcript.is_empty() => self.record.context.map(Context::Percent),
-            None => None,
+            None => Some(Context::Percent(0)),
         }
     }
 

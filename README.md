@@ -39,7 +39,7 @@ Press `prefix + b` to open the sidebar. For other ways to install, see [Install]
 | ✓ (cyan) | done | The turn has ended. `Shell` on the right means a shell it started in the background still runs, such as a dev server |
 | ○ (gray) | idle | Just started, or 60 s without input |
 
-Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_all_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in. When that window has no row, the heading of its tmux session gets a white bar instead.
+Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%); before the first reply it shows `0%`. The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_all_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in. When that window has no row, the heading of its tmux session gets a white bar instead.
 
 ## Usage
 

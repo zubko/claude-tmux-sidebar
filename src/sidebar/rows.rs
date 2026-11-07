@@ -67,13 +67,9 @@ fn entries(group: &Group) -> impl Iterator<Item = Row> {
         .flat_map(|(_, rows)| rows)
 }
 
-/// A Claude session, followed by its detail line when there is anything to show.
+/// A Claude session and its detail line, so that every session takes two lines.
 fn session_rows(claude: &Claude) -> Vec<Row> {
-    let detail = !claude.record.prompt.is_empty() || claude.context().is_some();
-    [Row::Session(claude.clone())]
-        .into_iter()
-        .chain(detail.then(|| Row::Detail(claude.clone())))
-        .collect()
+    vec![Row::Session(claude.clone()), Row::Detail(claude.clone())]
 }
 
 /// The key of a selectable row: the cursor stops on tmux session headings, Claude sessions and windows

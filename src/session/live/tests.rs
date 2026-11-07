@@ -107,7 +107,12 @@ fn prefers_the_transcript_to_the_old_context() {
         context: Some(64),
         ..Record::default()
     };
-    let read = claude(record.clone(), Some(Latest { context: None }));
-    assert_eq!(read.context(), None);
-    assert_eq!(claude(record, None).context(), None);
+    let compacted = claude(record.clone(), Some(Latest { context: None }));
+    assert_eq!(compacted.context(), None, "unknown after a compaction");
+    let unanswered = claude(record, None);
+    assert_eq!(
+        unanswered.context(),
+        Some(Context::Percent(0)),
+        "nothing used before a reply"
+    );
 }

@@ -81,3 +81,21 @@ fn an_unlisted_model_shows_its_token_count() {
         Some(" └ fix the failing sidebar t… 61k ")
     );
 }
+
+#[test]
+fn a_session_before_its_first_reply_shows_zero_percent() {
+    let claude = Claude {
+        record: Record {
+            transcript: "/t".to_owned(),
+            ..record(Status::Idle, "")
+        },
+        latest: None,
+        ..busy_claude(1, "api", None)
+    };
+    let screen = screen(&model_of(claude, false), &EN);
+    let detail = screen.get(4).cloned().unwrap_or_default();
+    assert!(
+        detail.starts_with(" └ ") && detail.ends_with(" 0% "),
+        "{detail}"
+    );
+}

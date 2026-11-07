@@ -111,6 +111,16 @@ fn the_session_in_this_window_is_marked() {
 }
 
 #[test]
+fn every_session_has_a_detail_line() {
+    let screen = screen(&model(Status::Idle, "", false), &EN);
+    assert_eq!(screen.get(4).map(|s| s.trim_end()), Some(" └"));
+    assert_eq!(
+        screen.get(4).map(|s| text::width(s)),
+        Some(usize::from(WIDTH))
+    );
+}
+
+#[test]
 fn rows_fill_the_width_and_hide_idle_details() {
     let row = screen(&model(Status::Idle, "Bash", false), &JA)
         .get(3)

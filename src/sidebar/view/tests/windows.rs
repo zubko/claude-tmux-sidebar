@@ -43,13 +43,19 @@ fn model_with_windows(selected: Option<RowKey>) -> Model {
 #[test]
 fn windows_without_claude_sit_between_sessions_in_window_order() {
     let screen = screen(&model_with_windows(None), &EN);
-    let list: Vec<&str> = screen.iter().skip(2).take(4).map(String::as_str).collect();
+    let list: Vec<&str> = screen
+        .iter()
+        .skip(2)
+        .take(5)
+        .map(|s| s.trim_end())
+        .collect();
     assert_eq!(
         list,
         [
             " ▾ work",
             "   1:talk to core",
-            " ✓ 2:api                       2s ",
+            " ✓ 2:api                       2s",
+            " └",
             "▌  3:docs",
         ]
     );
