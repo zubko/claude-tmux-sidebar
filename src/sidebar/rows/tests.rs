@@ -2,7 +2,7 @@ use super::*;
 use crate::session::Record;
 use crate::tmux::pane::fixture::pane;
 
-fn groups() -> Vec<Group> {
+pub fn groups() -> Vec<Group> {
     let claude = Claude {
         record: Record {
             session_id: "c".to_owned(),
@@ -53,15 +53,15 @@ fn lays_out_groups_with_gaps_and_placeholders() {
 fn maps_screen_lines_to_rows() {
     let rows = rows(&groups());
     let session = Some(RowKey::Session("a".to_owned()));
-    assert_eq!(at(&rows, 20, FIRST_ROW), session);
-    assert_eq!(at(&rows, 20, FIRST_ROW + 1), session);
-    assert_eq!(at(&rows, 20, FIRST_ROW + 2), None);
-    assert_eq!(at(&rows, 20, FIRST_ROW + 3), None);
+    assert_eq!(at(&rows, None, 20, FIRST_ROW), session);
+    assert_eq!(at(&rows, None, 20, FIRST_ROW + 1), session);
+    assert_eq!(at(&rows, None, 20, FIRST_ROW + 2), None);
+    assert_eq!(at(&rows, None, 20, FIRST_ROW + 3), None);
     assert_eq!(
-        at(&rows, 20, FIRST_ROW + 5),
+        at(&rows, None, 20, FIRST_ROW + 5),
         Some(RowKey::Claude("c".to_owned()))
     );
-    assert_eq!(at(&rows, 4, FIRST_ROW + 4), None);
+    assert_eq!(at(&rows, None, 4, FIRST_ROW + 4), None);
 }
 
 /// Claude `c1` in window 1 and `c3` in window 3; windows 2 and 4 run no Claude.
@@ -117,3 +117,5 @@ fn a_pane_is_stood_for_by_its_claude_then_its_window_then_its_session() {
         RowKey::Session("s".to_owned())
     );
 }
+
+mod scroll;

@@ -120,6 +120,8 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
   name. The real size for an account comes from `claude -p --model <m> --output-format json "hi"` →
   `modelUsage.<id>.contextWindow` (a JSON array when `verbose` is on, one object otherwise).
 - [fork] The accent color (title, current-window bar) is Claude's coral, `#D97757` (`ACCENT` in `sidebar::view`).
+- The list scrolls to keep the selected row and its lines on screen. The offset is derived from the selection and
+  the height on every draw and click (`rows::offset`), never stored.
 - Keys in the list: `j` / `k` / arrows move, `g` / `G` first / last, `n` / `p` next / previous done or waiting Claude,
   `Enter` / `l` / click go, `r` reload, `q` close (`Esc` too in the popup).
 

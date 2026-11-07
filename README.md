@@ -53,7 +53,7 @@ Each session shows its tmux window name as the status line shows it (or its dire
 | `Enter` / click | Go to that pane (or that tmux session, on a session heading) |
 | `q` | Close |
 
-Sessions, windows and panes are listed in tmux's own order. The selection follows the pane you are focused on.
+Sessions, windows and panes are listed in tmux's own order. The selection follows the pane you are focused on, and the list scrolls to keep the selected row on screen.
 
 ## Options
 

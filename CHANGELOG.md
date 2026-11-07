@@ -4,10 +4,16 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+Takes the colors, the status line command, the scrolling list and the active-window background from upstream 0.8.0 to 0.12.0. The upstream window tree (`@cts_label`) and the context window guess are not taken.
+
 ### Changed
 
 - `@cts_show_windows` is renamed `@cts_all_windows`, the name upstream chose for the same option.
 - A tmux session heading is a row: the cursor stops on it, and Enter or a click switches to that session. When the window you are in has no row (no Claude in it, and `@cts_all_windows` off), the heading of its session gets the cursor and a white bar. Before, the cursor stayed on an unrelated row.
+
+### Fixed
+
+- The list scrolls to keep the cursor on screen when its rows do not fit the pane; before, the cursor could move off the bottom and rows there could not be seen or clicked.
 
 ## [0.7.5-zubko.2] - 2026-11-07
 

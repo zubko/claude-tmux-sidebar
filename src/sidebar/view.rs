@@ -39,7 +39,7 @@ pub fn lines(model: &Model, messages: &Messages, width: u16, height: u16) -> Vec
     let body: Vec<Line<'static>> = if model.snapshot.rows.is_empty() {
         vec![Line::styled(format!(" {}", messages.no_sessions), MUTED)]
     } else {
-        rows::placed(&model.snapshot.rows, end)
+        rows::placed(&model.snapshot.rows, model.selection.selected.as_ref(), end)
             .map(|(_, row)| row_line(model, messages, row, width))
             .collect()
     };
