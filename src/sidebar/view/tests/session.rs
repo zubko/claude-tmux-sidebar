@@ -61,6 +61,20 @@ fn a_window_without_a_name_shows_its_index_like_tmux() {
 }
 
 #[test]
+fn a_window_tmux_named_shows_the_directory_instead() {
+    let mut claude = busy_claude(3, "claude", None);
+    claude.pane = claude.pane.map(|p| Pane {
+        window_named: false,
+        ..p
+    });
+    let screen = screen(&model_of(claude, false), &EN);
+    assert!(
+        screen.get(3).is_some_and(|row| row.starts_with("✓ 2:api ")),
+        "{screen:?}"
+    );
+}
+
+#[test]
 fn a_narrow_row_cuts_the_window_name() {
     let model = model_of(busy_claude(1, "run the app", Some(90)), true);
     let row = |width| lines(&model, &EN, width, model.height).get(3).map(text);

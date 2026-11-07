@@ -16,6 +16,7 @@ Takes the colors, the status line command, the scrolling list and the active-win
 - `@cts_show_windows` is renamed `@cts_all_windows`, the name upstream chose for the same option.
 - A tmux session heading is a row: the cursor stops on it, and Enter or a click switches to that session. When the window you are in has no row (no Claude in it, and `@cts_all_windows` off), the heading of its session stands for it. Before, the cursor stayed on an unrelated row.
 - The window you are in is marked by the `@cts_color_active` background (default `colour235`) on its rows, instead of the bar in the left column. Rows now start at the left edge, one column wider. When the cursor is on such a row, the background is the cursor's and the window index (`2:`) takes the accent color, so the two marks do not hide each other.
+- A Claude row in a window that tmux named itself shows the session's directory instead of the window name: tmux names a window after the command it runs, so such a name says nothing. A window named by hand (`rename-window`, `new-window -n`) shows its name as before, and a window without Claude always shows `#I:#W`.
 - Every Claude session takes two lines: the detail line shows even before the first prompt, and a session that has not replied yet shows `0%` context usage. Right after `/compact` the usage is still left blank until the next reply.
 
 ### Fixed

@@ -123,8 +123,10 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 - The window you are in is marked by the `active` background on its rows (`view::here`). The cursor's background
   wins; then the window index (`2:`) takes the accent color, or the whole label when it shows no index, or the whole
   heading when the heading stands for the window (`view::window::number_first`). Rows start at the left edge.
-- [fork] The window label is what the tmux status line shows: `#I:#W`. The index is left out only when the session has
-  one window and the name is not empty. The directory shows only outside tmux. No git branch.
+- [fork] The window label is what the tmux status line shows, `#I:#W`, when the window was named by hand
+  (`Pane::window_named`, from `#{automatic-rename}`). When tmux named the window itself (after the command it runs:
+  `claude`, `node`), a Claude row shows the directory instead, as outside tmux; a window row keeps `#I:#W`. The index
+  is left out only when the session has one window and the name is not empty. No git branch.
 - [fork] Context usage is a share of the window size listed in the `@cts_context_windows` tmux option
   (`model=tokens ...`). The model id is the transcript entry's `requestedModel`, or `message.model` when that is
   empty; the tokens are input plus cache creation plus cache read. Only an exact model id gets a percentage; an

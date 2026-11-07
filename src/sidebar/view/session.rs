@@ -122,12 +122,14 @@ pub fn bold_if(on: bool) -> Modifier {
     }
 }
 
-/// The window as tmux names it, or the directory outside tmux.
+/// The window as the user named it; the directory when tmux named the window itself (after the command
+/// it runs, which says nothing about the session), and outside tmux.
 fn name(claude: &Claude) -> String {
-    claude.pane.as_ref().map_or_else(
-        || claude.folder().into_owned(),
-        |pane| window::label(pane, &pane.window_name),
-    )
+    match &claude.pane {
+        Some(pane) if pane.window_named => window::label(pane, &pane.window_name),
+        Some(pane) => window::label(pane, &claude.folder()),
+        None => claude.folder().into_owned(),
+    }
 }
 
 /// `[detail ]age`; the icon already shows the status, and the detail (tool name, or the shell a done

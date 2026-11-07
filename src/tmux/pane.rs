@@ -48,6 +48,8 @@ pub struct Pane {
     pub session_windows: u32,
     pub window_id: WindowId,
     pub window_name: String,
+    /// The name was set by hand: tmux turns `automatic-rename` off for such a window.
+    pub window_named: bool,
     pub sidebar: bool,
     pub active: bool,
     pub last: bool,
@@ -56,7 +58,7 @@ pub struct Pane {
 
 /// The `list-panes -F` format that [`parse`] reads.
 pub const FORMAT: &str = "#{pane_id}\t#{pane_pid}\t#{session_name}\t#{window_index}\t#{pane_index}\t#{window_id}\t\
-                          #{@cts_sidebar}\t#{pane_active}\t#{pane_last}\t#{window_active}\t#{session_windows}\t#{window_name}";
+                          #{@cts_sidebar}\t#{pane_active}\t#{pane_last}\t#{window_active}\t#{session_windows}\t#{automatic-rename}\t#{window_name}";
 
 /// Parses `list-panes -F FORMAT` output, skipping malformed lines.
 pub fn parse(output: &str) -> Vec<Pane> {
@@ -65,7 +67,7 @@ pub fn parse(output: &str) -> Vec<Pane> {
 
 fn parse_line(line: &str) -> Option<Pane> {
     // Last field and splitn: a window name may contain a tab.
-    let fields: Vec<&str> = line.splitn(12, '\t').collect();
+    let fields: Vec<&str> = line.splitn(13, '\t').collect();
     let [
         id,
         pid,
@@ -75,6 +77,7 @@ fn parse_line(line: &str) -> Option<Pane> {
         window_id,
         bools @ ..,
         session_windows,
+        automatic_rename,
         window_name,
     ] = fields.as_slice()
     else {
@@ -89,6 +92,7 @@ fn parse_line(line: &str) -> Option<Pane> {
         session_windows: session_windows.parse().ok()?,
         window_id: WindowId::parse(window_id)?,
         window_name: (*window_name).to_owned(),
+        window_named: *automatic_rename == "0",
         ..flags(bools)?
     })
 }
@@ -140,6 +144,7 @@ pub mod fixture {
             session_windows: 1,
             window_id: WindowId(window),
             window_name: String::new(),
+            window_named: true,
             sidebar: false,
             active: false,
             last: false,
