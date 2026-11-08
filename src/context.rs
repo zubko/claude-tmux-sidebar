@@ -19,6 +19,8 @@ pub struct Context {
     pub exe: PathBuf,
     /// `CTS_DEBUG` is set: the hook logs raw payloads.
     pub debug: bool,
+    /// Claude Code's own directory (`CLAUDE_CONFIG_DIR`, else `~/.claude`), where it lists its sessions.
+    pub claude_dir: PathBuf,
 }
 
 impl Context {
@@ -33,15 +35,18 @@ impl Context {
                 .unwrap_or_default(),
             exe: env::current_exe().unwrap_or_else(|_| PathBuf::from(APP_DIR)),
             debug: var("CTS_DEBUG").is_some(),
+            claude_dir: var("CLAUDE_CONFIG_DIR")
+                .map_or_else(|| home(var).join(".claude"), PathBuf::from),
         }
     }
 }
 
 fn cache_dir(var: impl Fn(&str) -> Option<String>) -> PathBuf {
-    var("XDG_CACHE_HOME").map_or_else(
-        || PathBuf::from(var("HOME").unwrap_or_default()).join(".cache"),
-        PathBuf::from,
-    )
+    var("XDG_CACHE_HOME").map_or_else(|| home(var).join(".cache"), PathBuf::from)
+}
+
+fn home(var: impl Fn(&str) -> Option<String>) -> PathBuf {
+    PathBuf::from(var("HOME").unwrap_or_default())
 }
 
 /// Seconds since the Unix epoch.

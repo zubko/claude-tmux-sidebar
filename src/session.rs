@@ -2,6 +2,7 @@
 
 pub mod context_window;
 pub mod live;
+pub mod seed;
 pub mod store;
 pub mod transcript;
 
@@ -53,7 +54,7 @@ pub struct Record {
     /// The session's transcript, where the sidebar reads the context usage.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub transcript: String,
-    /// Whether background tasks were still running when the main thread last stopped.
+    /// Whether background tasks other than shells were still running when the main thread last stopped.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub background: bool,
     /// While waiting: the subagent whose prompt is pending, or empty for the main thread.

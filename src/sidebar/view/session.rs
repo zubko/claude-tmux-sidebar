@@ -152,15 +152,14 @@ fn label(pane: &Pane) -> String {
     }
 }
 
-/// `[detail ]age`; the icon already shows the status, and the detail (tool name) is shown only while
-/// running or waiting.
+/// `[detail ]age`; the icon already shows the status, and the detail (tool name, or the shell a done
+/// session still runs) is not shown while idle.
 fn status_text(model: &Model, claude: &Claude) -> String {
     let record = &claude.record;
     let since = record.since.unwrap_or(record.updated_at);
     let base = age(model.now.saturating_sub(since));
-    let busy =
-        matches!(record.state, Status::Running | Status::Waiting) && !record.detail.is_empty();
-    if busy {
+    let shows_detail = record.state != Status::Idle && !record.detail.is_empty();
+    if shows_detail {
         format!("{} {base}", record.detail)
     } else {
         base

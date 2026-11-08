@@ -4,26 +4,24 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-### Changed
-
-- Windows without Claude are listed only with the new `@cts_show_windows on` option. It is off by default.
-
-### Fixed
-
-- Closing the sidebar restores the saved layout only while the window still has the size it was saved at. A layout saved at another size made the panes larger than the window on tmux 3.7, so the bottom of a pane was off screen but still took input. This happened after a client with another screen size had resized the window.
-- Rows outside tmux keep their order. They sort by folder name, then by session id. Before, the order changed on every refresh.
-
-## [0.7.5-zubko.1] - 2026-10-28
+## [0.7.5-zubko.2] - 2026-11-07
 
 First release of the fork zubko/claude-tmux-sidebar, on top of 0.7.5.
 
 ### Changed
 
 - A row shows the tmux window name as the status line shows it, instead of the directory and git branch. Outside tmux it still shows the directory.
-- Every tmux window is listed. A window without Claude is a dim row you can select; Enter or a click goes to its pane. `n` / `p` still visit only Claude sessions.
+- The new `@cts_show_windows on` option lists every tmux window. A window without Claude is a dim row you can select; Enter or a click goes to its pane. `n` / `p` still visit only Claude sessions. The option is off by default.
 - Context window sizes come from the new `@cts_context_windows` option instead of a guess from the model name. A model that is not listed shows its token count.
+- A session whose turn has ended is done even while a shell it started in the background still runs. The row shows `Shell` on the right. Before, it stayed running until the shell ended, and a dev server or a log stream never ends.
 - The title and the current-window bar use Claude's coral instead of magenta.
 - Release binaries are downloaded from this fork. The release workflow signs them in a job that runs no build, and publishes without a saved write token.
+
+### Fixed
+
+- A Claude session whose `SessionStart` hook never wrote a state file is listed anyway. The sidebar reads Claude Code's own session list (`~/.claude/sessions/<pid>.json`) and writes an idle record for every Claude that runs in a pane of its server and has no record yet. Before, the sessions that tmux-resurrect brought back after a reboot stayed off the list until their next hook event, because most of their `SessionStart` hooks never wrote a record (Claude Code drops a hook that misses its 5-second timeout, and a dozen sessions started at once).
+- Closing the sidebar restores the saved layout only while the window still has the size it was saved at. A layout saved at another size made the panes larger than the window on tmux 3.7, so the bottom of a pane was off screen but still took input. This happened after a client with another screen size had resized the window.
+- Rows outside tmux keep their order. They sort by folder name, then by session id. Before, the order changed on every refresh.
 
 ## [0.7.5] - 2026-10-28
 
@@ -152,8 +150,8 @@ First release of the fork zubko/claude-tmux-sidebar, on top of 0.7.5.
 - `install.sh` for manual setups, with `--hooks-only` and `--uninstall`.
 - Options: `@cts_width`, `@cts_toggle_key` (several keys allowed), `@cts_popup_key`, `@cts_next_key`, `@cts_prev_key`, `@cts_default`, `@cts_lang` (`en` / `ja`), `@cts_hook_index`.
 
-[Unreleased]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5-zubko.1...HEAD
-[0.7.5-zubko.1]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5...v0.7.5-zubko.1
+[Unreleased]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5-zubko.2...HEAD
+[0.7.5-zubko.2]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5...v0.7.5-zubko.2
 [0.7.5]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.2...v0.7.3

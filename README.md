@@ -17,7 +17,7 @@ Run several Claude Code sessions in parallel across tmux and you soon lose track
 1. With [TPM](https://github.com/tmux-plugins/tpm), add the plugin to `~/.tmux.conf` and press `prefix + I`:
 
    ```tmux
-   set -g @plugin 'zubko/claude-tmux-sidebar#v0.7.5-zubko.1'
+   set -g @plugin 'zubko/claude-tmux-sidebar#v0.7.5-zubko.2'
    ```
 
 2. Inside Claude Code, install the hooks, then restart running Claude Code sessions:
@@ -34,9 +34,9 @@ Press `prefix + b` to open the sidebar. For other ways to install, see [Install]
 
 | Icon | Status | When |
 |---|---|---|
-| ⠹ (green) | running | Claude is working, or subagents or shells it started in the background still are |
+| ⠹ (green) | running | Claude is working, or subagents it started in the background still are |
 | ◆ (yellow) | waiting for you | Claude asks for approval or asks you a question |
-| ✓ (cyan) | done | The turn has ended and nothing is left running |
+| ✓ (cyan) | done | The turn has ended. `Shell` on the right means a shell it started in the background still runs, such as a dev server |
 | ○ (gray) | idle | Just started, or 60 s without input |
 
 Each session shows its tmux window name as the status line shows it (or its directory outside tmux), with the tool in use and how long it has been in that status on the right. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%). The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_show_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in.
@@ -98,12 +98,12 @@ gh attestation verify ~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sideba
 There are two parts: the **tmux plugin** draws the sidebar, and the **Claude Code hooks** report each session's status. The [Quick start](#quick-start) installs both; for other setups:
 
 - **Follow `main` instead of a release**: `set -g @plugin 'zubko/claude-tmux-sidebar'`. Pinning a tag is recommended: nothing changes until you change the tag, and release tags cannot be moved or deleted.
-- **Pin the Claude Code plugin to a release**: `/plugin marketplace add zubko/claude-tmux-sidebar#v0.7.5-zubko.1`, then `/plugin install tmux-sidebar@zubko`. The same two commands without the tag also work on Claude Code versions without `--marketplace`.
+- **Pin the Claude Code plugin to a release**: `/plugin marketplace add zubko/claude-tmux-sidebar#v0.7.5-zubko.2`, then `/plugin install tmux-sidebar@zubko`. The same two commands without the tag also work on Claude Code versions without `--marketplace`.
 - **Hooks without the Claude Code plugin**: `~/.tmux/plugins/claude-tmux-sidebar/install.sh --hooks-only` registers them in `~/.claude/settings.json` (backed up first as `settings.json.bak.<timestamp>`). Use this or the plugin, not both, or every hook runs twice.
 - **Without TPM**:
 
   ```sh
-  git clone --branch v0.7.5-zubko.1 https://github.com/zubko/claude-tmux-sidebar ~/.tmux/plugins/claude-tmux-sidebar
+  git clone --branch v0.7.5-zubko.2 https://github.com/zubko/claude-tmux-sidebar ~/.tmux/plugins/claude-tmux-sidebar
   ~/.tmux/plugins/claude-tmux-sidebar/install.sh
   ```
 

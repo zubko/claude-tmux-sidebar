@@ -122,6 +122,15 @@ fn rows_fill_the_width_and_hide_idle_details() {
 }
 
 #[test]
+fn a_done_row_names_the_shell_it_still_runs() {
+    let row = screen(&model(Status::Done, "Shell", false), &EN)
+        .get(3)
+        .cloned()
+        .unwrap_or_default();
+    assert!(row.ends_with(" Shell 2s "), "{row}");
+}
+
+#[test]
 fn the_cursor_is_a_background_that_keeps_the_row_colors() {
     let model = model(Status::Done, "", true);
     let line = lines(&model, &EN, WIDTH, model.height)

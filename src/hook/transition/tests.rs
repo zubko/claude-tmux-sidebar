@@ -122,46 +122,6 @@ fn a_failed_tool_or_a_denied_prompt_ends_the_wait() {
 }
 
 #[test]
-fn background_tasks_keep_a_stopped_session_running() {
-    let busy = |kind| Event::Stop { busy: Some(kind) };
-    let working = run(&[
-        Event::UserPromptSubmit,
-        busy("subagent"),
-        Event::Notification {
-            kind: "idle_prompt",
-            agent: "",
-        },
-    ]);
-    assert_eq!(
-        (working.state, working.detail.as_str(), working.background),
-        (Status::Running, "Agent", true)
-    );
-    // A subagent hands back, which wakes the main thread; its shell is still running.
-    let shell = run(&[busy("subagent"), Event::UserPromptSubmit, busy("shell")]);
-    assert_eq!(
-        (shell.state, shell.detail.as_str()),
-        (Status::Running, "Shell")
-    );
-    let done = run(&[busy("subagent"), Event::UserPromptSubmit, DONE]);
-    assert_eq!((done.state, done.background), (Status::Done, false));
-}
-
-#[test]
-fn a_new_process_has_no_background_tasks() {
-    let record = run(&[
-        Event::Stop {
-            busy: Some("shell"),
-        },
-        Event::SessionStart { source: "resume" },
-        Event::Notification {
-            kind: "idle_prompt",
-            agent: "",
-        },
-    ]);
-    assert!(!record.background);
-}
-
-#[test]
 fn unknown_events_are_ignored() {
     assert_eq!(
         next(
@@ -178,4 +138,5 @@ fn unknown_events_are_ignored() {
 }
 
 mod agents;
+mod background;
 mod late;

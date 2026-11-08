@@ -73,8 +73,9 @@ pub enum Event<'a> {
     ElicitationResult {
         agent: &'a str,
     },
-    /// `busy` is the kind of a background task still running, if any.
-    /// Monitors do not count: they wait for events, and some (artifact subscriptions) never end.
+    /// `busy` is the kind of a background task still running, if any. A shell is named only when
+    /// nothing else runs. Monitors do not count: they wait for events, and some (artifact
+    /// subscriptions) never end.
     /// Also `StopFailure` (the turn ended on an API error), which reports no background tasks.
     Stop {
         busy: Option<&'a str>,
@@ -105,11 +106,7 @@ impl<'a> Event<'a> {
             "Elicitation" => Self::Elicitation { agent },
             "ElicitationResult" => Self::ElicitationResult { agent },
             "Stop" => Self::Stop {
-                busy: payload
-                    .background_tasks
-                    .iter()
-                    .find(|t| t.status == "running" && t.kind != "monitor")
-                    .map(|t| t.kind.as_str()),
+                busy: busy(&payload.background_tasks),
             },
             "StopFailure" => Self::Stop { busy: None },
             "SubagentStop" => Self::SubagentStop { agent },
@@ -118,73 +115,21 @@ impl<'a> Event<'a> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// The `background_tasks` kind of a shell command that runs in the background.
+pub const SHELL: &str = "shell";
 
-    #[test]
-    fn reads_the_event_and_its_data() {
-        let payload: Payload = serde_json::from_str(
-            r#"{"hook_event_name":"PreToolUse","session_id":"s","tool_name":"Bash","extra":1}"#,
-        )
-        .unwrap_or_default();
-        assert_eq!(
-            Event::of(&payload),
-            Event::PreToolUse {
-                tool: "Bash",
-                agent: ""
-            }
-        );
-    }
-
-    #[test]
-    fn reads_the_subagent_a_hook_fired_in() {
-        let payload: Payload = serde_json::from_str(
-            r#"{"hook_event_name":"PostToolUseFailure","session_id":"s","tool_name":"Bash",
-                "agent_id":"a1","agent_type":"Explore"}"#,
-        )
-        .unwrap_or_default();
-        assert_eq!(
-            Event::of(&payload),
-            Event::PostToolUse {
-                tool: "Bash",
-                agent: "a1"
-            }
-        );
-    }
-
-    #[test]
-    fn stop_reads_the_running_background_task() {
-        let payload: Payload = serde_json::from_str(
-            r#"{"hook_event_name":"Stop","session_id":"s","background_tasks":[
-                {"id":"a","type":"subagent","status":"completed"},
-                {"id":"b","type":"shell","status":"running","command":"sleep 40"}]}"#,
-        )
-        .unwrap_or_default();
-        assert_eq!(
-            Event::of(&payload),
-            Event::Stop {
-                busy: Some("shell")
-            }
-        );
-    }
-
-    #[test]
-    fn stop_failure_ends_the_turn() {
-        let payload: Payload = serde_json::from_str(
-            r#"{"hook_event_name":"StopFailure","session_id":"s","error":"rate_limit"}"#,
-        )
-        .unwrap_or_default();
-        assert_eq!(Event::of(&payload), Event::Stop { busy: None });
-    }
-
-    #[test]
-    fn stop_does_not_count_a_running_monitor() {
-        let payload: Payload = serde_json::from_str(
-            r#"{"hook_event_name":"Stop","session_id":"s","background_tasks":[
-                {"id":"a","type":"monitor","status":"running"}]}"#,
-        )
-        .unwrap_or_default();
-        assert_eq!(Event::of(&payload), Event::Stop { busy: None });
-    }
+/// The kind of the running background task that keeps a session busy, a shell only as the last choice.
+fn busy(tasks: &[BackgroundTask]) -> Option<&str> {
+    let running = || {
+        tasks
+            .iter()
+            .filter(|t| t.status == "running" && t.kind != "monitor")
+    };
+    running()
+        .find(|t| t.kind != SHELL)
+        .or_else(|| running().next())
+        .map(|t| t.kind.as_str())
 }
+
+#[cfg(test)]
+mod tests;
