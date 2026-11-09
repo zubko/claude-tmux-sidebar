@@ -1,6 +1,6 @@
 use super::*;
 
-fn window(index: u32, name: &str) -> Pane {
+pub(super) fn window(index: u32, name: &str) -> Pane {
     Pane {
         window_name: name.to_owned(),
         session_windows: 3,
@@ -9,7 +9,7 @@ fn window(index: u32, name: &str) -> Pane {
 }
 
 /// Claude `a` in window 2; windows 1 and 3 run no Claude; the sidebar is in window 3.
-fn model_with_windows(selected: Option<RowKey>) -> Model {
+pub(super) fn model_with_windows(selected: Option<RowKey>) -> Model {
     let groups = [Group {
         name: GroupName::Session("work".to_owned()),
         claudes: vec![claude_in(3)],

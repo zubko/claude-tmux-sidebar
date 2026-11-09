@@ -5,13 +5,15 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
-use super::rows::{self, Row, RowKey};
-use super::theme::Theme;
+use super::mark::ActiveMark;
+use super::rows::{self, Row};
 use super::update::Model;
 use crate::i18n::Messages;
 use crate::listing::GroupName;
 use crate::session::Status;
+use crate::text;
 
+mod active;
 mod session;
 mod window;
 
@@ -47,23 +49,23 @@ pub fn lines(model: &Model, messages: &Messages, width: u16, height: u16) -> Vec
         .into_iter()
         .chain(body)
         .chain(std::iter::repeat_n(Line::default(), filler))
-        .chain(model.help.then(|| help(messages, theme)))
+        .chain(model.help.then(|| help(model, messages)))
         .collect()
 }
 
-/// `⏎ jump  j/k move  q close`: bold keys, muted labels.
-fn help(messages: &Messages, theme: &Theme) -> Line<'static> {
+/// `⏎ jump  j/k move  q close`: bold keys, muted labels, after the bar's column when there is one.
+fn help(model: &Model, messages: &Messages) -> Line<'static> {
     let spans = messages
         .help
         .iter()
         .enumerate()
         .flat_map(|(i, (key, label))| {
-            let gap = if i == 0 { "" } else { "  " };
+            let gap = if i == 0 { model.mark.margin() } else { "  " };
             [
                 Span::raw(gap),
                 Span::styled(*key, Modifier::BOLD),
                 Span::raw(" "),
-                Span::styled(*label, theme.muted),
+                Span::styled(*label, model.theme.muted),
             ]
         });
     Line::from(spans.collect::<Vec<_>>())
@@ -91,59 +93,38 @@ fn title(model: &Model) -> Line<'static> {
             .add_modifier(Modifier::BOLD),
     );
     Line::from(
-        [title, Span::raw(" ")]
+        [Span::raw(model.mark.margin()), title, Span::raw(" ")]
             .into_iter()
             .chain(counts)
             .collect::<Vec<_>>(),
     )
 }
 
+/// One row. The row drawers learn about the cursor only with the background mark: there the cursor's
+/// background hides the mark of the window you are in, so the window index turns accent instead. The bar
+/// stays visible under the cursor.
 fn row_line(model: &Model, messages: &Messages, row: &Row, width: usize) -> Line<'static> {
     let selected = rows::owner(row).is_some_and(|k| model.selection.selected.as_ref() == Some(&k));
-    let here = here(model, row);
+    let here = active::here(model, row);
+    let cursor = selected && model.mark == ActiveMark::Background;
+    let inner = width.saturating_sub(text::width(model.mark.margin()));
     let line = match row {
         Row::Gap => Line::default(),
         Row::Empty(_) => empty(model, messages),
-        Row::Heading(name) => heading(model, name, messages, here && selected),
-        Row::Session(claude) => session::line(model, claude, width, selected),
-        Row::Detail(claude) => session::detail(model, claude, width),
-        Row::Window(pane) => window::line(model, pane, width, selected),
+        Row::Heading(name) => heading(model, name, messages, here && cursor),
+        Row::Session(claude) => session::line(model, claude, inner, cursor),
+        Row::Detail(claude) => session::detail(model, claude, inner),
+        Row::Window(pane) => window::line(model, pane, inner, cursor),
     };
-    match background(&model.theme, here, selected) {
+    let line = match model.mark {
+        ActiveMark::Bar => {
+            Line::from([vec![active::marker(model, row, here)], line.spans].concat())
+        }
+        ActiveMark::Background => line,
+    };
+    match active::background(model, here, selected) {
         Some(color) => fill(line, width, color),
         None => line,
-    }
-}
-
-/// The row belongs to the window you are in: a Claude or window row of that window, or the heading and
-/// placeholder of its tmux session while no row of the list stands for that window.
-fn here(model: &Model, row: &Row) -> bool {
-    let window = model.snapshot.window;
-    match row {
-        Row::Session(c) | Row::Detail(c) => {
-            c.pane.as_ref().is_some_and(|p| Some(p.window_id) == window)
-        }
-        Row::Window(p) => Some(p.window_id) == window,
-        Row::Heading(GroupName::Session(s)) | Row::Empty(s) => stands_for_focus(model, s),
-        Row::Heading(GroupName::Outside) | Row::Gap => false,
-    }
-}
-
-/// The focused pane has no Claude or window row, so the heading of its tmux session stands for it.
-fn stands_for_focus(model: &Model, session: &str) -> bool {
-    model.snapshot.focus.as_ref().is_some_and(|p| {
-        rows::key_for_pane(&model.snapshot.rows, p) == RowKey::Session(session.to_owned())
-    })
-}
-
-/// The cursor's background, or else the one that marks the rows of the window you are in.
-fn background(theme: &Theme, here: bool, selected: bool) -> Option<Color> {
-    if selected {
-        Some(theme.cursor)
-    } else if here {
-        Some(theme.active)
-    } else {
-        None
     }
 }
 
@@ -157,15 +138,14 @@ fn empty(model: &Model, messages: &Messages) -> Line<'static> {
     )
 }
 
-/// `▾ work`; in the accent color when the cursor sits on it while it stands for the window you are in,
-/// since the cursor's background hides the one that marks that window.
-fn heading(model: &Model, name: &GroupName, messages: &Messages, accented: bool) -> Line<'static> {
+/// `▾ work`, in the accent color with `accent`.
+fn heading(model: &Model, name: &GroupName, messages: &Messages, accent: bool) -> Line<'static> {
     let text = match name {
         GroupName::Session(s) => s.as_str(),
         GroupName::Outside => messages.outside,
     };
     let style = Style::new().add_modifier(Modifier::BOLD);
-    let style = if accented {
+    let style = if accent {
         style.fg(model.theme.accent)
     } else {
         style

@@ -3,6 +3,7 @@
 
 mod effect;
 mod input;
+pub mod mark;
 pub mod rows;
 pub mod selection;
 pub mod snapshot;
@@ -23,6 +24,7 @@ use crate::i18n::{self, Messages};
 use crate::session::store;
 use crate::tmux::{self, pane::PaneId};
 use effect::Next;
+use mark::ActiveMark;
 use snapshot::Caches;
 use theme::Theme;
 use update::{Model, Msg};
@@ -92,6 +94,7 @@ fn event_loop(terminal: &mut DefaultTerminal, env: &Env<'_>) -> io::Result<()> {
         height,
         now: context::now(),
         theme: Theme::from_options(tmux::global_option),
+        mark: ActiveMark::parse(tmux::global_option(mark::OPTION).as_deref()),
         ..Model::default()
     };
     let start = Loop {

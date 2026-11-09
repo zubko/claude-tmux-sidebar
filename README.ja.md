@@ -39,7 +39,7 @@ tmux で Claude Code を何本も並行して動かしていると、どれが�
 | ✓ (水色) | 完了 | ターンが終わり、動いているものが残っていない |
 | ○ (灰) | 待機 | 起動直後、または 60 秒入力がない |
 
-各セッションには、自分で名前を付けた tmux ウィンドウ（`rename-window`、`new-window -n`）ならその名前を表示します。tmux が実行中のコマンドから名前を付けたウィンドウでは、tmux の外と同じようにセッションのディレクトリを表示します。右側には使用中のツールとその状態になってからの経過時間を表示します。下の行には最後に送ったプロンプトと context window の使用率を表示します（50% から黄色、80% から赤）。最初の応答の前は `0%` です。ウィンドウ番号（`1:api`）は、その tmux セッションにウィンドウが 2 つ以上あるとき、またはウィンドウ名が空のときに付きます。`@cts_all_windows on` にすると、Claude のいないウィンドウも薄い色で表示します。今いるウィンドウの行は背景が暗くなります（`@cts_color_active`）。そのウィンドウに行が無いときは、代わりにその tmux セッションの見出しの背景が暗くなります。
+各セッションには、自分で名前を付けた tmux ウィンドウ（`rename-window`、`new-window -n`）ならその名前を表示します。tmux が実行中のコマンドから名前を付けたウィンドウでは、tmux の外と同じようにセッションのディレクトリを表示します。右側には使用中のツールとその状態になってからの経過時間を表示します。下の行には最後に送ったプロンプトと context window の使用率を表示します（50% から黄色、80% から赤）。最初の応答の前は `0%` です。ウィンドウ番号（`1:api`）は、その tmux セッションにウィンドウが 2 つ以上あるとき、またはウィンドウ名が空のときに付きます。`@cts_all_windows on` にすると、Claude のいないウィンドウも薄い色で表示します。左端のコーラル色のバーは、今いるウィンドウの印です。そのウィンドウに行が無いときは、代わりにその tmux セッションの見出しに文字色のバーが付きます。`@cts_active_mark background` にすると、バーの代わりにそのウィンドウの行の背景が暗くなり（`@cts_color_active`）、カーソルがその行にあるときはウィンドウ番号がコーラル色になります。
 
 ## 操作
 
@@ -69,9 +69,10 @@ set -g @cts_default off       # tmux 起動時に開いておくか
 set -g @cts_lang ja           # en / ja
 set -g @cts_help on           # 下端のキー操作ヘルプを表示
 set -g @cts_all_windows off   # Claude のいないウィンドウも表示
+set -g @cts_active_mark bar   # 今いるウィンドウの印: bar / background
 set -g @cts_hook_index 77     # tmux hook 配列のインデックス（衝突時のみ変更）
 set -g @cts_color_accent '#D97757'  # 色（下の表を参照）
-set -g @cts_color_active colour235  # 今いるウィンドウの行の背景
+set -g @cts_color_active colour235  # 今いるウィンドウの行の背景（@cts_active_mark background のとき）
 ```
 
 tmux が既に割り当てているキー（例: `C-b` は `send-prefix`）を指定すると、プラグイン側の割り当てで上書きされます。
@@ -80,9 +81,9 @@ tmux が既に割り当てているキー（例: `C-b` は `send-prefix`）を�
 
 | 設定 | 色を付ける箇所 | 既定値 |
 |---|---|---|
-| `@cts_color_accent` | タイトルと、今いるウィンドウのカーソル行にあるウィンドウ番号 | `#D97757` |
+| `@cts_color_accent` | タイトルとバー、background のときは今いるウィンドウのカーソル行にあるウィンドウ番号 | `#D97757` |
 | `@cts_color_cursor` | カーソル行の背景 | `colour237` |
-| `@cts_color_active` | 今いるウィンドウの行の背景 | `colour235` |
+| `@cts_color_active` | 今いるウィンドウの行の背景（`@cts_active_mark background` のとき） | `colour235` |
 | `@cts_color_muted` | 補足の文字（プロンプト、ヘルプの説明、Claude のいないウィンドウ） | `colour245` |
 | `@cts_color_dim` | 薄い文字（区切り線、待機の印） | `brightblack` |
 | `@cts_color_waiting` | 承認待ちの印 | `yellow` |

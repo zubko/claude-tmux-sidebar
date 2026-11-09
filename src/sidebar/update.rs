@@ -4,6 +4,7 @@ mod destination;
 
 use destination::destination;
 
+use super::mark::ActiveMark;
 use super::rows::{self, Row, RowKey};
 use super::selection::{self, Selection};
 use super::snapshot::Snapshot;
@@ -24,6 +25,8 @@ pub struct Model {
     /// The key help is shown on the last line.
     pub help: bool,
     pub theme: Theme,
+    /// How the window you are in is marked.
+    pub mark: ActiveMark,
 }
 
 impl Model {

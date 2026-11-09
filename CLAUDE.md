@@ -97,7 +97,7 @@ Pure modules turn values into values. Side effects stay at the edges: `tmux`, `s
 | `control`, `control::layout` | open / close / ensure / fix-width; the saved layout |
 | `listing` | groups: tmux sessions in tmux order, then "outside tmux"; [fork] windows without Claude |
 | `jump` | the next / previous done or waiting Claude |
-| `sidebar` | the loop; `snapshot` (load), `rows`, `selection`, `update` (pure), `view` (render), `theme` (colors), `input`, `effect` |
+| `sidebar` | the loop; `snapshot` (load), `rows`, `selection`, `update` (pure), `view` (render), `theme` (colors), `mark` ([fork] bar or background), `input`, `effect` |
 | `sidebar::update::destination` | [fork] where a row goes: a Claude pane, a window's pane, or a session |
 | `text`, `i18n` | width, truncation, ages, token counts, shell quoting; `en` / `ja` strings |
 
@@ -119,10 +119,14 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
   switches to that session. The `none` placeholder under a session with nothing listed belongs to its heading.
   The row that stands for a pane (`rows::key_for_pane`) is its own Claude row, else a row of its window, else
   its session heading. So when the window you are in has no row, its heading (and the placeholder) gets the
-  active background, and the cursor when the sidebar follows the focus.
-- The window you are in is marked by the `active` background on its rows (`view::here`). The cursor's background
-  wins; then the window index (`2:`) takes the accent color, or the whole label when it shows no index, or the whole
-  heading when the heading stands for the window (`view::window::number_first`). Rows start at the left edge.
+  mark of that window (bar or background), and the cursor when the sidebar follows the focus.
+- [fork] `@cts_active_mark` (`sidebar::mark`) chooses how the window you are in is marked (`view::active`). `bar`,
+  the option's default, adds a left column to every row, the title and the help line. Rows of the window you are in
+  get `▌` in the accent color. A heading (and its `none` placeholder) that stands for that window gets `▌` in the
+  text color. The window index never takes the accent. `background` is upstream's look and also
+  `ActiveMark::default()`, so the view tests keep upstream's output. Rows start at the left edge and get the
+  `active` background. The cursor's background wins, and then the window index (`2:`) takes the accent color, or the
+  whole label or heading when there is no index (`view::window::number_first`).
 - [fork] The window label is what the tmux status line shows, `#I:#W`, when the window was named by hand
   (`Pane::window_named`, from `#{automatic-rename}`). When tmux named the window itself (after the command it runs:
   `claude`, `node`), a Claude row shows the directory instead, as outside tmux; a window row keeps `#I:#W`. The index

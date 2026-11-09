@@ -29,19 +29,6 @@ fn accent_spans(model: &Model, row: usize) -> Vec<String> {
         .collect()
 }
 
-/// The user's pane 5 is in window 7, which has no row; `work` is its tmux session.
-fn heading_stands_in(selected: bool) -> Model {
-    let mut model = model(Status::Done, "", false);
-    let focus = Pane {
-        session: "work".to_owned(),
-        ..pane(5, 7)
-    };
-    model.snapshot.window = Some(focus.window_id);
-    model.snapshot.focus = Some(focus);
-    model.selection.selected = selected.then(|| RowKey::Session("work".to_owned()));
-    model
-}
-
 #[test]
 fn the_session_row_and_its_detail_row_have_the_active_background() {
     let model = here(model(Status::Done, "", false));

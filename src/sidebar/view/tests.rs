@@ -7,6 +7,7 @@ use crate::session::live::Claude;
 use crate::sidebar::rows::RowKey;
 use crate::sidebar::selection::Selection;
 use crate::sidebar::snapshot::Snapshot;
+use crate::sidebar::theme::Theme;
 use crate::text;
 use crate::tmux::pane::Pane;
 use crate::tmux::pane::fixture::pane;
@@ -82,6 +83,19 @@ fn screen(model: &Model, messages: &Messages) -> Vec<String> {
         .iter()
         .map(text)
         .collect()
+}
+
+/// The user's pane 5 is in window 7, which has no row; `work` is its tmux session.
+fn heading_stands_in(selected: bool) -> Model {
+    let mut model = model(Status::Done, "", false);
+    let focus = Pane {
+        session: "work".to_owned(),
+        ..pane(5, 7)
+    };
+    model.snapshot.window = Some(focus.window_id);
+    model.snapshot.focus = Some(focus);
+    model.selection.selected = selected.then(|| RowKey::Session("work".to_owned()));
+    model
 }
 
 /// The background of every span on screen row `row`.
@@ -161,28 +175,8 @@ fn the_cursor_is_a_background_that_keeps_the_row_colors() {
     assert!(line.spans.iter().any(|s| s.style.fg == Some(Color::Cyan)));
 }
 
-#[test]
-fn the_title_and_status_use_the_configured_colors() {
-    let theme = Theme {
-        accent: Color::Magenta,
-        done: Color::Indexed(82),
-        ..Theme::default()
-    };
-    let model = Model {
-        theme,
-        ..model(Status::Done, "", false)
-    };
-    let lines = lines(&model, &EN, WIDTH, model.height);
-    let colors = |i: usize| -> Vec<Option<Color>> {
-        lines
-            .get(i)
-            .map(|l| l.spans.iter().map(|s| s.style.fg).collect())
-            .unwrap_or_default()
-    };
-    assert!(colors(0).contains(&Some(theme.accent)));
-    assert!(colors(3).contains(&Some(theme.done)));
-}
-
 mod active;
+mod bar;
+mod colors;
 mod session;
 mod windows;
