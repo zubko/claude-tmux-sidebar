@@ -181,5 +181,6 @@ fn a_redundant_sidebar_removes_itself() {
     );
 }
 
+mod compact;
 mod headings;
 mod windows;

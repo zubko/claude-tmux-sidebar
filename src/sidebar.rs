@@ -1,6 +1,7 @@
 //! `sidebar` / `popup-ui`: the interactive list. The event loop is a fold over steps; each step draws,
 //! reads input, applies the pure [`update`](update::update) and runs the resulting effects.
 
+pub mod compact;
 mod effect;
 mod input;
 pub mod mark;
@@ -23,6 +24,7 @@ use crate::context::{self, Context};
 use crate::i18n::{self, Messages};
 use crate::session::store;
 use crate::tmux::{self, pane::PaneId};
+use compact::Compact;
 use effect::Next;
 use mark::ActiveMark;
 use snapshot::Caches;
@@ -95,6 +97,7 @@ fn event_loop(terminal: &mut DefaultTerminal, env: &Env<'_>) -> io::Result<()> {
         now: context::now(),
         theme: Theme::from_options(tmux::global_option),
         mark: ActiveMark::parse(tmux::global_option(mark::OPTION).as_deref()),
+        compact: Compact::from_options(tmux::global_option),
         ..Model::default()
     };
     let start = Loop {

@@ -39,7 +39,7 @@ Press `prefix + b` to open the sidebar. For other ways to install, see [Install]
 | ✓ (cyan) | done | The turn has ended. `Shell` on the right means a shell it started in the background still runs, such as a dev server |
 | ○ (gray) | idle | Just started, or 60 s without input |
 
-Each session shows the name of its tmux window when you named the window (`rename-window`, `new-window -n`). When tmux named the window after the command it runs, the row shows the session's directory instead, as it does outside tmux. On the right are the tool in use and how long it has been in that status. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%); before the first reply it shows `0%`. The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_all_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in; when that window has no row, the heading of its tmux session gets a bar in the text color instead. With `@cts_active_mark background`, the rows of that window get a darker background instead of the bar (`@cts_color_active`), and the window index turns coral when the cursor is on such a row.
+Each session shows the name of its tmux window when you named the window (`rename-window`, `new-window -n`). When tmux named the window after the command it runs, the row shows the session's directory instead, as it does outside tmux. On the right are the tool in use and how long it has been in that status. The line below shows the last prompt you sent and how full the context window is (yellow from 50%, red from 80%); before the first reply it shows `0%`. With `@cts_compact on`, each session takes one line and the line below is left out, except for the session under the cursor; with `@cts_auto_compact on`, this happens only when the full list does not fit the pane. The sidebar reads both options when it opens. The window index (`1:api`) appears when the tmux session has more than one window, or when the window has no name. With `@cts_all_windows on`, windows without Claude are listed too, dimmed. A coral bar on the left edge marks the window you are in; when that window has no row, the heading of its tmux session gets a bar in the text color instead. With `@cts_active_mark background`, the rows of that window get a darker background instead of the bar (`@cts_color_active`), and the window index turns coral when the cursor is on such a row.
 
 ## Usage
 
@@ -70,6 +70,8 @@ set -g @cts_lang en           # en / ja
 set -g @cts_help on           # show the key help at the bottom
 set -g @cts_all_windows off   # also list the windows without Claude
 set -g @cts_active_mark bar   # how the window you are in is marked: bar / background
+set -g @cts_compact off       # one line per session: no prompt and context line, but under the cursor
+set -g @cts_auto_compact off  # the same, but only when the full list does not fit
 set -g @cts_hook_index 77     # tmux hook array index (change only on conflicts)
 set -g @cts_color_accent '#D97757'  # colors (see the table below)
 set -g @cts_color_active colour235  # the background of the rows of the window you are in, with @cts_active_mark background

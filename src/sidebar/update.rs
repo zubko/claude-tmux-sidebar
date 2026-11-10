@@ -4,6 +4,7 @@ mod destination;
 
 use destination::destination;
 
+use super::compact::{self, Compact};
 use super::mark::ActiveMark;
 use super::rows::{self, Row, RowKey};
 use super::selection::{self, Selection};
@@ -27,6 +28,8 @@ pub struct Model {
     pub theme: Theme,
     /// How the window you are in is marked.
     pub mark: ActiveMark,
+    /// One line per Claude session, always or when the full list does not fit.
+    pub compact: Compact,
 }
 
 impl Model {
@@ -111,7 +114,8 @@ pub fn update(model: Model, msg: Msg) -> (Model, Vec<Effect>) {
 fn clicked(model: Model, y: u16) -> (Model, Vec<Effect>) {
     let end = model.list_end(model.height);
     let selected = model.selection.selected.as_ref();
-    match rows::at(&model.snapshot.rows, selected, end, y) {
+    let key = rows::at(&compact::shown(&model, end), selected, end, y);
+    match key {
         Some(key) => activate(select(model, Some(key))),
         None => (model, vec![]),
     }

@@ -5,6 +5,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
+use super::compact;
 use super::mark::ActiveMark;
 use super::rows::{self, Row};
 use super::update::Model;
@@ -34,13 +35,14 @@ pub fn lines(model: &Model, messages: &Messages, width: u16, height: u16) -> Vec
     let width = usize::from(width);
     let end = model.list_end(height);
     let theme = &model.theme;
-    let body: Vec<Line<'static>> = if model.snapshot.rows.is_empty() {
+    let shown = compact::shown(model, end);
+    let body: Vec<Line<'static>> = if shown.is_empty() {
         vec![Line::styled(
             format!(" {}", messages.no_sessions),
             theme.muted,
         )]
     } else {
-        rows::placed(&model.snapshot.rows, model.selection.selected.as_ref(), end)
+        rows::placed(&shown, model.selection.selected.as_ref(), end)
             .map(|(_, row)| row_line(model, messages, row, width))
             .collect()
     };

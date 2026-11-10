@@ -1,5 +1,6 @@
 use super::*;
 use crate::session::transcript::{Latest, Usage};
+use crate::sidebar::compact::Compact;
 
 /// `context` is the percent of a 100-token window.
 fn busy_claude(windows: u32, window_name: &str, context: Option<u64>) -> Claude {
@@ -112,4 +113,18 @@ fn a_session_before_its_first_reply_shows_zero_percent() {
         detail.starts_with("└ ") && detail.ends_with(" 0% "),
         "{detail}"
     );
+}
+
+#[test]
+fn a_compact_session_takes_one_line() {
+    let model = Model {
+        compact: Compact::On,
+        ..model_of(busy_claude(1, "run the app", Some(42)), false)
+    };
+    let screen = screen(&model, &EN);
+    assert_eq!(
+        screen.get(3).map(String::as_str),
+        Some("✓ run the app                  2s ")
+    );
+    assert_eq!(screen.get(4).map(String::as_str), Some(""));
 }

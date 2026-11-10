@@ -11,6 +11,7 @@ Takes the colors, the status line command, the scrolling list and the active-win
 - `@cts_color_accent`, `@cts_color_cursor`, `@cts_color_active`, `@cts_color_muted`, `@cts_color_dim`, `@cts_color_waiting`, `@cts_color_running`, `@cts_color_done`, `@cts_color_warning` and `@cts_color_critical` options set the sidebar's colors as a basic tmux color name, `colourN` or `#rrggbb`. Without them the sidebar looks as before.
 - `claude-tmux-sidebar statusline` records each session's real context window size from Claude Code's status line input, in `<session_id>.window` next to the state file. Add one line to your status line script, as the README shows, and the row shows a percentage without listing the model in `@cts_context_windows`; the recorded size goes before that option.
 - The new `@cts_active_mark` option chooses how the window you are in is marked. `bar` (the default) keeps the coral bar in the left column. `background` marks its rows with the `@cts_color_active` background (default `colour235`), as upstream 0.12.0 does. Rows then start at the left edge. When the cursor is on such a row, the window index (`2:`) takes the accent color.
+- The new `@cts_compact` option shows one line per Claude session: the line with the last prompt and the context usage is left out, except for the session under the cursor. With `@cts_auto_compact on`, the list is compact only when the full list does not fit the pane. Both are `off` by default.
 
 ### Changed
 

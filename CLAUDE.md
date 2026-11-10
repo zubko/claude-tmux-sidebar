@@ -15,7 +15,9 @@ status edge cases and the release steps. This file is the short guide for an age
 
 - One status icon per Claude session: running (green spinner), waiting for you (yellow `◆`), done (cyan `✓`), idle
   (gray `○`). The tool in use and the time in that status sit on the right.
-- A second line per session: the last prompt and the context usage (yellow from 50%, red from 80%).
+- A second line per session: the last prompt and the context usage (yellow from 50%, red from 80%). [fork]
+  `@cts_compact on` leaves it out but for the selected session; `@cts_auto_compact on` does it only when the full
+  list does not fit.
 - `Enter` or a click goes to the session's pane. `n` / `p` in the sidebar and `prefix C-n` / `C-p` from anywhere go to
   the next or previous Claude that is done or waiting.
 - The same list in a popup (`prefix B`). Sessions without Claude are listed too, so the sidebar is also a session
@@ -97,7 +99,7 @@ Pure modules turn values into values. Side effects stay at the edges: `tmux`, `s
 | `control`, `control::layout` | open / close / ensure / fix-width; the saved layout |
 | `listing` | groups: tmux sessions in tmux order, then "outside tmux"; [fork] windows without Claude |
 | `jump` | the next / previous done or waiting Claude |
-| `sidebar` | the loop; `snapshot` (load), `rows`, `selection`, `update` (pure), `view` (render), `theme` (colors), `mark` ([fork] bar or background), `input`, `effect` |
+| `sidebar` | the loop; `snapshot` (load), `rows`, `selection`, `update` (pure), `view` (render), `theme` (colors), `mark` ([fork] bar or background), `compact` ([fork] one line per Claude), `input`, `effect` |
 | `sidebar::update::destination` | [fork] where a row goes: a Claude pane, a window's pane, or a session |
 | `text`, `i18n` | width, truncation, ages, token counts, shell quoting; `en` / `ja` strings |
 
@@ -112,6 +114,9 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 - A window with Claude shows the Claude row(s): status icon, window label, tool and age, and a second line with the
   last prompt and the context usage. Every Claude session takes two lines: the detail line shows `0%` before the
   first reply and nothing right after a compaction.
+- [fork] `@cts_compact on` / `@cts_auto_compact on` (`sidebar::compact`, read when the sidebar opens) leave out the
+  detail lines, except the selected session's. The snapshot keeps them; `compact::shown` drops them on every draw
+  and click, so both see the same rows. Auto drops them only when the full list does not fit above the help line.
 - With `@cts_all_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`). The
   cursor stops on it. `Enter` or a click goes to the pane the user works in there (`tmux::pane::focused`), never to
   a sidebar pane. `n` / `p` and `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.
