@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.12.0-zubko.2] - 2026-11-14
+
+### Fixed
+
+- rustix is updated to 1.1.6 for the advisory RUSTSEC-2026-0486. The sidebar does not use the affected xattr functions.
+
 ## [0.12.0-zubko.1] - 2026-11-14
 
 Takes the colors, the status line command, the scrolling list and the active-window background (as an option) from upstream 0.8.0 to 0.12.0. The upstream window tree (`@cts_label`) and the context window guess are not taken.
@@ -175,7 +181,8 @@ First release of the fork zubko/claude-tmux-sidebar, on top of 0.7.5.
 - `install.sh` for manual setups, with `--hooks-only` and `--uninstall`.
 - Options: `@cts_width`, `@cts_toggle_key` (several keys allowed), `@cts_popup_key`, `@cts_next_key`, `@cts_prev_key`, `@cts_default`, `@cts_lang` (`en` / `ja`), `@cts_hook_index`.
 
-[Unreleased]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.12.0-zubko.1...HEAD
+[Unreleased]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.12.0-zubko.2...HEAD
+[0.12.0-zubko.2]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.12.0-zubko.1...v0.12.0-zubko.2
 [0.12.0-zubko.1]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5-zubko.2...v0.12.0-zubko.1
 [0.7.5-zubko.2]: https://github.com/zubko/claude-tmux-sidebar/compare/v0.7.5...v0.7.5-zubko.2
 [0.7.5]: https://github.com/torikatsupg/claude-tmux-sidebar/compare/v0.7.4...v0.7.5
