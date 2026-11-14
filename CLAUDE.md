@@ -21,7 +21,9 @@ status edge cases and the release steps. This file is the short guide for an age
 - `Enter` or a click goes to the session's pane. `n` / `p` in the sidebar and `prefix C-n` / `C-p` from anywhere go to
   the next or previous Claude that is done or waiting.
 - The same list in a popup (`prefix B`). Sessions without Claude are listed too, so the sidebar is also a session
-  switcher.
+  switcher. [fork] `@cts_popup_height` sets the popup's height (default `80%`, at least 10 lines). When tmux
+  rejects the size, the popup tries the default height, then the full width (`control::popup::sizes`). It opens
+  on the client that pressed the key (`popup [pane] [client]`), as `next` / `prev` do.
 - Options are tmux global options with the prefix `@cts_` (`@cts_width`, `@cts_toggle_key`, `@cts_lang`, ...). See
   `README.md` for the list. The colors are `@cts_color_*` options (`sidebar::theme`, defaults in `Theme::DEFAULT`).
 - `claude-tmux-sidebar statusline` records a session's real context window size from Claude Code's status line
@@ -96,7 +98,7 @@ Pure modules turn values into values. Side effects stay at the edges: `tmux`, `s
 | `session::context_window` | `@cts_context_windows` parsing; tokens to a percent of the window ([fork] no guess: tokens when unlisted) |
 | `process` | is a pid alive; which Claude process started this hook |
 | `hook` | `event` (payload), `transition` (status state machine), `compose` (next record) |
-| `control`, `control::layout` | open / close / ensure / fix-width; the saved layout |
+| `control`, `control::layout`, `control::popup` | open / close / ensure / fix-width; the saved layout; the popup |
 | `listing` | groups: tmux sessions in tmux order, then "outside tmux"; [fork] windows without Claude |
 | `jump` | the next / previous done or waiting Claude |
 | `sidebar` | the loop; `snapshot` (load), `rows`, `selection`, `update` (pure), `view` (render), `theme` (colors), `mark` ([fork] bar or background), `compact` ([fork] one line per Claude), `input`, `effect` |

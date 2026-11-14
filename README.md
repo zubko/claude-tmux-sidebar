@@ -63,6 +63,7 @@ Set them in `~/.tmux.conf` **before** the plugin is loaded (before `run '~/.tmux
 set -g @cts_width 34          # sidebar width
 set -g @cts_toggle_key b      # several keys allowed, space-separated
 set -g @cts_popup_key B
+set -g @cts_popup_height 80%  # popup height: 10 lines or more, or a percent of the terminal; 100% for all of it
 set -g @cts_next_key C-n
 set -g @cts_prev_key C-p
 set -g @cts_default off       # open the sidebar when tmux starts

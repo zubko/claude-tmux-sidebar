@@ -32,7 +32,7 @@ pub fn run(command: Command, ctx: &Context) -> ExitCode {
         Command::Off => control::off(),
         Command::Ensure { window } => control::ensure(ctx, window),
         Command::FixWidth { window } => control::fix_width(window),
-        Command::Popup { origin } => control::popup(ctx, origin),
+        Command::Popup { origin, client } => control::popup(ctx, origin, client.as_deref()),
         Command::Jump {
             direction,
             from,

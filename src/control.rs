@@ -1,6 +1,9 @@
 //! tmux-side commands: open, close and maintain the sidebar pane in every window.
 
 pub mod layout;
+mod popup;
+
+pub use popup::popup;
 
 use layout::{LAYOUT_OPTION, PANES_OPTION, Saved};
 
@@ -14,8 +17,6 @@ use crate::tmux::{
 const DEFAULT_WIDTH: u16 = 34;
 const ENABLED_OPTION: &str = "@cts_enabled";
 const SIDEBAR_OPTION: &str = "@cts_sidebar";
-/// The popup is a little wider than the sidebar to fit its border.
-const POPUP_EXTRA_WIDTH: u16 = 6;
 
 fn width() -> u16 {
     tmux::global_option("@cts_width")
@@ -167,26 +168,4 @@ pub fn fix_width(window: Option<WindowId>) {
     if let Some(id) = sidebar {
         tmux::run(&["resize-pane", "-t", &id, "-x", &wanted]);
     }
-}
-
-/// Shows the list in a popup instead of the sidebar.
-pub fn popup(ctx: &Context, origin: Option<PaneId>) {
-    let origin = origin.map(|o| o.to_string()).unwrap_or_default();
-    let command = format!(
-        "{} popup-ui {}",
-        shell_quote(&ctx.exe.to_string_lossy()),
-        shell_quote(&origin)
-    );
-    let width = (width() + POPUP_EXTRA_WIDTH).to_string();
-    tmux::run(&[
-        "display-popup",
-        "-E",
-        "-w",
-        &width,
-        "-h",
-        "80%",
-        "-T",
-        " Claude ",
-        &command,
-    ]);
 }

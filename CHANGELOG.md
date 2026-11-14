@@ -12,6 +12,7 @@ Takes the colors, the status line command, the scrolling list and the active-win
 - `claude-tmux-sidebar statusline` records each session's real context window size from Claude Code's status line input, in `<session_id>.window` next to the state file. Add one line to your status line script, as the README shows, and the row shows a percentage without listing the model in `@cts_context_windows`; the recorded size goes before that option.
 - The new `@cts_active_mark` option chooses how the window you are in is marked. `bar` (the default) keeps the coral bar in the left column. `background` marks its rows with the `@cts_color_active` background (default `colour235`), as upstream 0.12.0 does. Rows then start at the left edge. When the cursor is on such a row, the window index (`2:`) takes the accent color.
 - The new `@cts_compact` option shows one line per Claude session: the line with the last prompt and the context usage is left out, except for the session under the cursor. With `@cts_auto_compact on`, the list is compact only when the full list does not fit the pane. Both are `off` by default.
+- The new `@cts_popup_height` option sets the height of the popup (`prefix B`): 10 lines or more, or a percent of the terminal, such as `100%`. The default is `80%`, as before. When tmux rejects the size, for example more lines than the terminal has, the popup opens at `80%`. A popup wider than the terminal, such as on a phone, takes the full width.
 
 ### Changed
 
@@ -23,6 +24,7 @@ Takes the colors, the status line command, the scrolling list and the active-win
 
 ### Fixed
 
+- With several terminals attached, such as a laptop and a phone, the popup opens on the terminal where you pressed the key. Before, tmux could open it on another one.
 - The list scrolls to keep the cursor on screen when its rows do not fit the pane; before, the cursor could move off the bottom and rows there could not be seen or clicked.
 
 ## [0.7.5-zubko.2] - 2026-11-07

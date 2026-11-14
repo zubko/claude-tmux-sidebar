@@ -30,6 +30,16 @@ pub fn run(args: &[&str]) -> bool {
         .is_ok_and(|s| s.success())
 }
 
+/// Runs `tmux ARGS`, reporting whether tmux took the command: it printed no error. `display-popup` waits
+/// for the popup and exits with its command's status, so the exit status cannot tell.
+pub fn accepted(args: &[&str]) -> bool {
+    Command::new("tmux")
+        .args(args)
+        .stdin(Stdio::null())
+        .output()
+        .is_ok_and(|o| o.stderr.is_empty())
+}
+
 /// A tmux format expanded against a target, trimmed.
 pub fn display(target: &str, format: &str) -> String {
     output(&["display", "-p", "-t", target, format])

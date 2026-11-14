@@ -10,7 +10,7 @@ tmux side:
   on [pane] | off            open / close the sidebar
   ensure [window]            add the sidebar to a window if enabled and missing (tmux hooks)
   fix-width [window]         restore the sidebar width after a layout change (tmux hooks)
-  popup [pane]               show the list in a popup instead (pane: where it was opened from)
+  popup [pane] [client]      show the list in a popup on client instead (pane: where it was opened from)
   next|prev [pane] [client]  go to the next / previous done or waiting Claude
 
 internal:
@@ -38,6 +38,7 @@ pub enum Command {
     },
     Popup {
         origin: Option<PaneId>,
+        client: Option<String>,
     },
     Jump {
         direction: Direction,
@@ -69,7 +70,10 @@ pub fn parse(args: &[String]) -> Option<Command> {
         "off" => Command::Off,
         "ensure" => Command::Ensure { window: window(1) },
         "fix-width" => Command::FixWidth { window: window(1) },
-        "popup" => Command::Popup { origin: pane(1) },
+        "popup" => Command::Popup {
+            origin: pane(1),
+            client: arg(2).map(str::to_owned),
+        },
         "next" => jump(Direction::Next),
         "prev" => jump(Direction::Prev),
         "sidebar" => Command::Sidebar,
@@ -106,6 +110,13 @@ mod tests {
             Some(Command::Jump {
                 direction: Direction::Next,
                 from: PaneId::parse("%1"),
+                client: Some("/dev/ttys001".to_owned())
+            })
+        );
+        assert_eq!(
+            parsed(&["popup", "%1", "/dev/ttys001"]),
+            Some(Command::Popup {
+                origin: PaneId::parse("%1"),
                 client: Some("/dev/ttys001".to_owned())
             })
         );
