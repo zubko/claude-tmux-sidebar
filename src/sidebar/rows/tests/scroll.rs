@@ -70,3 +70,16 @@ fn a_heading_scrolls_in_with_its_placeholder() {
         Some(session)
     );
 }
+
+#[test]
+fn a_window_scrolls_in_with_its_blank_line() {
+    let window = Row::Window(pane(1, 1));
+    let key = key(&window);
+    let rows = [
+        Row::Heading(GroupName::Session("s".to_owned())),
+        window.clone(),
+        Row::Pad(Box::new(window)),
+    ];
+    assert_eq!(offset(&rows, key.as_ref(), FIRST_ROW + 2), 1);
+    assert_eq!(at(&rows, key.as_ref(), FIRST_ROW + 2, FIRST_ROW + 1), key);
+}

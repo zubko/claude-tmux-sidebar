@@ -111,7 +111,7 @@ fn row_line(model: &Model, messages: &Messages, row: &Row, width: usize) -> Line
     let cursor = selected && model.mark == ActiveMark::Background;
     let inner = width.saturating_sub(text::width(model.mark.margin()));
     let line = match row {
-        Row::Gap => Line::default(),
+        Row::Gap | Row::Pad(_) => Line::default(),
         Row::Empty(_) => empty(model, messages),
         Row::Heading(name) => heading(model, name, messages, here && cursor),
         Row::Session(claude) => session::line(model, claude, inner, cursor),

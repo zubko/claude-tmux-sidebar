@@ -150,7 +150,7 @@ fn moving_past_the_last_row_wraps_to_the_first() {
     );
     let last = update(model, Msg::Action(Action::Last)).0;
     let wrapped = update(last, Msg::Action(Action::Move(1))).0;
-    assert_eq!(selected(&wrapped), Some(&RowKey::Session("s".to_owned())));
+    assert_eq!(selected(&wrapped), Some(&claude_key("a")));
     let back = update(wrapped, Msg::Action(Action::Move(-1))).0;
     assert_eq!(selected(&back), Some(&claude_key("b")));
 }

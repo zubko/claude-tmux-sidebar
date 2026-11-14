@@ -1,10 +1,11 @@
 //! One line per Claude session instead of two, chosen by the `@cts_compact` and `@cts_auto_compact` tmux
 //! options. The snapshot keeps the detail lines; drawing and clicks leave them out, except the selected
-//! session's.
+//! session's. A selected window without Claude gets a blank line, so the list keeps its height as the
+//! cursor moves.
 
 use std::borrow::Cow;
 
-use super::rows::{self, Row};
+use super::rows::{self, Row, RowKey};
 use super::update::Model;
 
 const OPTION: &str = "@cts_compact";
@@ -42,18 +43,29 @@ pub fn shown(model: &Model, end: u16) -> Cow<'_, [Row]> {
         Compact::Auto => all.len() > usize::from(end.saturating_sub(rows::FIRST_ROW)),
     };
     if compact {
-        Cow::Owned(
-            all.iter()
-                .filter(|r| {
-                    !matches!(r, Row::Detail(_))
-                        || rows::owner(r).as_ref() == model.selection.selected.as_ref()
-                })
-                .cloned()
-                .collect(),
-        )
+        let selected = model.selection.selected.as_ref();
+        let kept = all
+            .iter()
+            .filter(|r| !matches!(r, Row::Detail(_)) || rows::owner(r).as_ref() == selected)
+            .cloned()
+            .collect();
+        Cow::Owned(padded(kept, selected))
     } else {
         Cow::Borrowed(all)
     }
+}
+
+/// A blank line under the selected window without Claude, so the cursor takes two lines there too.
+fn padded(mut list: Vec<Row>, selected: Option<&RowKey>) -> Vec<Row> {
+    let window = list
+        .iter()
+        .enumerate()
+        .find(|(_, r)| matches!(r, Row::Window(_)) && rows::key(r).as_ref() == selected)
+        .map(|(i, r)| (i + 1, r.clone()));
+    if let Some((at, row)) = window {
+        list.insert(at, Row::Pad(Box::new(row)));
+    }
+    list
 }
 
 #[cfg(test)]
@@ -63,6 +75,7 @@ mod tests {
     use crate::session::Record;
     use crate::session::live::Claude;
     use crate::sidebar::snapshot::Snapshot;
+    use crate::tmux::pane::fixture::pane;
 
     fn options(compact: &str, auto: &str) -> Compact {
         Compact::from_options(|name| match name {
@@ -119,7 +132,19 @@ mod tests {
     #[test]
     fn the_selected_session_keeps_its_detail_line() {
         let mut model = model(Compact::On);
-        model.selection.selected = Some(rows::RowKey::Claude(String::new()));
+        model.selection.selected = Some(RowKey::Claude(String::new()));
         assert_eq!(shown(&model, rows::FIRST_ROW).len(), 3);
+    }
+
+    #[test]
+    fn a_selected_window_without_claude_gets_a_blank_line() {
+        let mut model = model(Compact::On);
+        let window = Row::Window(pane(1, 0));
+        model.snapshot.rows.push(window.clone());
+        model.selection.selected = rows::key(&window);
+        assert_eq!(
+            shown(&model, rows::FIRST_ROW).get(3),
+            Some(&Row::Pad(Box::new(window)))
+        );
     }
 }

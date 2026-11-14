@@ -21,6 +21,8 @@ pub enum Row {
     Window(Pane),
     /// The placeholder under a tmux session with nothing listed; it belongs to the heading above it.
     Empty(String),
+    /// A blank line under the selected row of a compact list when that row has no detail line.
+    Pad(Box<Row>),
 }
 
 /// A selectable row: a tmux session (its heading), a window without Claude, or a Claude session by id.
@@ -72,14 +74,18 @@ fn session_rows(claude: &Claude) -> Vec<Row> {
     vec![Row::Session(claude.clone()), Row::Detail(claude.clone())]
 }
 
-/// The key of a selectable row: the cursor stops on tmux session headings, Claude sessions and windows
-/// without Claude, never on the heading outside tmux.
+/// The key of a row that can be clicked: a tmux session heading, a Claude session or a window without
+/// Claude, never the heading outside tmux.
 pub fn key(row: &Row) -> Option<RowKey> {
     match row {
         Row::Heading(GroupName::Session(name)) => Some(RowKey::Session(name.clone())),
         Row::Window(pane) => Some(RowKey::Window(pane.window_id)),
         Row::Session(c) => Some(RowKey::Claude(c.record.session_id.clone())),
-        Row::Heading(GroupName::Outside) | Row::Detail(_) | Row::Empty(_) | Row::Gap => None,
+        Row::Heading(GroupName::Outside)
+        | Row::Detail(_)
+        | Row::Empty(_)
+        | Row::Pad(_)
+        | Row::Gap => None,
     }
 }
 
@@ -89,13 +95,34 @@ pub fn owner(row: &Row) -> Option<RowKey> {
     match row {
         Row::Detail(c) => Some(RowKey::Claude(c.record.session_id.clone())),
         Row::Empty(name) => Some(RowKey::Session(name.clone())),
+        Row::Pad(row) => owner(row),
         _ => key(row),
     }
 }
 
-/// Selectable rows in display order.
+/// Rows the cursor stops on, in display order: a tmux session heading only when nothing is listed under it,
+/// by its placeholder.
 pub fn keys(rows: &[Row]) -> Vec<RowKey> {
-    rows.iter().filter_map(key).collect()
+    rows.iter()
+        .filter_map(|r| match r {
+            Row::Heading(_) => None,
+            Row::Empty(name) => Some(RowKey::Session(name.clone())),
+            _ => key(r),
+        })
+        .collect()
+}
+
+/// Where the cursor goes for `target`: a tmux session heading with rows under it hands it to its first row.
+pub fn stop(rows: &[Row], target: RowKey) -> RowKey {
+    let RowKey::Session(name) = &target else {
+        return target;
+    };
+    rows.iter()
+        .skip_while(|r| !matches!(r, Row::Heading(GroupName::Session(n)) if n == name))
+        .nth(1)
+        .filter(|r| matches!(r, Row::Session(_) | Row::Window(_)))
+        .and_then(key)
+        .unwrap_or(target)
 }
 
 /// The row that stands for a pane: its own Claude session, else a row of its window (a Claude session or

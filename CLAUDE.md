@@ -117,16 +117,19 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
   last prompt and the context usage. Every Claude session takes two lines: the detail line shows `0%` before the
   first reply and nothing right after a compaction.
 - [fork] `@cts_compact on` / `@cts_auto_compact on` (`sidebar::compact`, read when the sidebar opens) leave out the
-  detail lines, except the selected session's. The snapshot keeps them; `compact::shown` drops them on every draw
-  and click, so both see the same rows. Auto drops them only when the full list does not fit above the help line.
+  detail lines, except the selected session's. A selected window row gets a blank line (`Row::Pad`) below it, so
+  the height does not change as the cursor moves. The snapshot keeps the detail lines; `compact::shown` drops
+  them on every draw and click, so both see the same rows. Auto drops them only when the full list does not fit
+  above the help line.
 - With `@cts_all_windows on` (default off), a window without Claude is a dim one-line row (`Row::Window`). The
   cursor stops on it. `Enter` or a click goes to the pane the user works in there (`tmux::pane::focused`), never to
   a sidebar pane. `n` / `p` and `prefix C-n` / `C-p` visit only Claude rows that are done or waiting.
-- [fork] A tmux session heading is a row too (`RowKey::Session`): the cursor stops on it, and `Enter` or a click
-  switches to that session. The `none` placeholder under a session with nothing listed belongs to its heading.
-  The row that stands for a pane (`rows::key_for_pane`) is its own Claude row, else a row of its window, else
-  its session heading. So when the window you are in has no row, its heading (and the placeholder) gets the
-  mark of that window (bar or background), and the cursor when the sidebar follows the focus.
+- [fork] A tmux session heading is a row too (`RowKey::Session`): a click switches to that session. The cursor
+  (`rows::keys`) stops on it only when nothing is listed under it; then the `none` placeholder belongs to it.
+  Otherwise the cursor goes to its first row (`rows::stop`), also after a click on it. The row that stands for a
+  pane (`rows::key_for_pane`) is its own Claude row, else a row of its window, else its session heading. So when
+  the window you are in has no row, its heading (and the placeholder) gets the mark of that window (bar or
+  background), and the cursor goes there or to the heading's first row when the sidebar follows the focus.
 - [fork] `@cts_active_mark` (`sidebar::mark`) chooses how the window you are in is marked (`view::active`). `bar`,
   the option's default, adds a left column to every row, the title and the help line. Rows of the window you are in
   get `▌` in the accent color. A heading (and its `none` placeholder) that stands for that window gets `▌` in the
@@ -184,9 +187,11 @@ grow. Test fixtures: `tmux::pane::fixture::pane`, `CTS_STATE_DIR` with a `tempfi
 
 ## Trying a build in the live sidebar
 
-Build with `cargo build --release --locked`, keep a backup of the installed binary, move the new one over
-`~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sidebar`, then run `bin/cts off` and `bin/cts on` to restart
-every sidebar. Ask the user first: this changes their running tmux.
+After every code change, build and put the new binary in the live sidebar without asking: build with
+`cargo build --release --locked`, move the new binary over
+`~/.tmux/plugins/claude-tmux-sidebar/bin/claude-tmux-sidebar`, then run `bin/cts off` and `bin/cts on` in the plugin
+folder to restart every sidebar. No backup is needed: to get the release binary back, remove that file and run
+`scripts/fetch-binary.sh` in the plugin folder.
 
 ## Releases and the fork
 

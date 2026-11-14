@@ -19,7 +19,10 @@ pub fn follow(selection: Selection, snapshot: &Snapshot, popup: bool) -> Selecti
     let focus = snapshot
         .focus
         .as_ref()
-        .map(|p| (p.id, rows::key_for_pane(&snapshot.rows, p)))
+        .map(|p| {
+            let key = rows::key_for_pane(&snapshot.rows, p);
+            (p.id, rows::stop(&snapshot.rows, key))
+        })
         .filter(|(_, key)| keys.contains(key));
     let mirror = !popup && !snapshot.sidebar_active;
     let synced = focus

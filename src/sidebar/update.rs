@@ -114,11 +114,12 @@ pub fn update(model: Model, msg: Msg) -> (Model, Vec<Effect>) {
 fn clicked(model: Model, y: u16) -> (Model, Vec<Effect>) {
     let end = model.list_end(model.height);
     let selected = model.selection.selected.as_ref();
-    let key = rows::at(&compact::shown(&model, end), selected, end, y);
-    match key {
-        Some(key) => activate(select(model, Some(key))),
-        None => (model, vec![]),
-    }
+    let Some(key) = rows::at(&compact::shown(&model, end), selected, end, y) else {
+        return (model, vec![]);
+    };
+    let stop = rows::stop(&model.snapshot.rows, key.clone());
+    let (model, effects) = activate(select(model, Some(key)));
+    (select(model, Some(stop)), effects)
 }
 
 fn act(model: Model, action: Action) -> (Model, Vec<Effect>) {

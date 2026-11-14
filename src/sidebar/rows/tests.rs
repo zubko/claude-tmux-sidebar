@@ -93,13 +93,7 @@ fn claude_key(id: &str) -> RowKey {
 fn puts_windows_without_claude_between_claude_sessions_in_window_order() {
     assert_eq!(
         keys(&mixed_rows()),
-        [
-            RowKey::Session("s".to_owned()),
-            claude_key("c1"),
-            window(2),
-            claude_key("c3"),
-            window(4)
-        ]
+        [claude_key("c1"), window(2), claude_key("c3"), window(4)]
     );
 }
 
@@ -119,3 +113,11 @@ fn a_pane_is_stood_for_by_its_claude_then_its_window_then_its_session() {
 }
 
 mod scroll;
+
+#[test]
+fn the_cursor_passes_a_heading_with_rows_to_its_first_row() {
+    let session = |name: &str| RowKey::Session(name.to_owned());
+    assert_eq!(stop(&mixed_rows(), session("s")), claude_key("c1"));
+    assert_eq!(stop(&rows(&groups()), session("a")), session("a"));
+    assert_eq!(stop(&mixed_rows(), window(2)), window(2));
+}

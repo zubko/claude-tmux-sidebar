@@ -18,6 +18,7 @@ pub fn here(model: &Model, row: &Row) -> bool {
         }
         Row::Window(p) => Some(p.window_id) == window,
         Row::Heading(GroupName::Session(s)) | Row::Empty(s) => stands_for_focus(model, s),
+        Row::Pad(row) => here(model, row),
         Row::Heading(GroupName::Outside) | Row::Gap => false,
     }
 }
@@ -46,6 +47,7 @@ pub fn marker(model: &Model, row: &Row, here: bool) -> Span<'static> {
     match row {
         _ if !here => Span::raw(" "),
         Row::Heading(_) | Row::Empty(_) => Span::raw("▌"),
+        Row::Pad(row) => marker(model, row, here),
         _ => Span::styled("▌", model.theme.accent),
     }
 }

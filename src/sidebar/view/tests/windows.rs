@@ -1,4 +1,5 @@
 use super::*;
+use crate::sidebar::compact::Compact;
 
 pub(super) fn window(index: u32, name: &str) -> Pane {
     Pane {
@@ -100,4 +101,20 @@ fn a_window_row_without_a_name_shows_its_index() {
     };
     let line = text(&window::line(&model, &pane, usize::from(WIDTH), false));
     assert_eq!(line, "  1:");
+}
+
+#[test]
+fn a_selected_window_in_a_compact_list_has_a_blank_line_under_the_cursor() {
+    let key = RowKey::Window(window(1, "").window_id);
+    let model = Model {
+        compact: Compact::On,
+        ..model_with_windows(Some(key))
+    };
+    let line = lines(&model, &EN, WIDTH, model.height)
+        .get(4)
+        .cloned()
+        .unwrap_or_default();
+    assert_eq!(text(&line).trim(), "");
+    assert_eq!(line.width(), usize::from(WIDTH));
+    assert!(line.spans.iter().all(|s| s.style.bg == Some(CURSOR)));
 }
