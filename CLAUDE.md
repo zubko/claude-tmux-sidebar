@@ -195,7 +195,7 @@ folder to restart every sidebar. No backup is needed: to get the release binary 
 
 ## Releases and the fork
 
-- [fork] The version has a fork suffix (`0.7.5-zubko.2`) in `Cargo.toml`, `Cargo.lock`, `.claude-plugin/plugin.json`,
+- [fork] The version has a fork suffix (`0.12.0-zubko.1`) in `Cargo.toml`, `Cargo.lock`, `.claude-plugin/plugin.json`,
   `.claude-plugin/marketplace.json` and `CHANGELOG.md`; the release workflow checks that they match and that the tag
   is new.
 - [fork] The README install lines, the manifest links and the plugin marketplace name (`zubko`) point at this fork.
